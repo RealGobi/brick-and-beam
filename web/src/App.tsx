@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Dashboard from '../src/views/Dashboard'
 
 export default function App() {
   const [status, setStatus] = useState("hämtar...");
@@ -14,6 +15,7 @@ export default function App() {
     <main>
       <h1>Brick & Beam</h1>
       <p>{status}</p>
+      <Dashboard />
     </main>
   );
 }
