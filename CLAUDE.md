@@ -11,6 +11,23 @@ Guidelines for Claude Code in this project.
 - Prefer simple, straightforward logic over nested conditionals. Use early returns where it makes the code clearer.
 - Follow existing patterns and conventions in the codebase.
 
+## TypeScript
+
+- **Never use `any`** – not as a type, in `as any` casts, or in generics like `Array<any>`.
+  It turns off type checking and hides the errors the build is supposed to catch.
+- Use a specific type instead. When the type is truly unknown (e.g. parsed JSON or caught errors), use `unknown` and narrow it before use.
+
+```ts
+// Bad
+const body: any = await response.json();
+
+// Good
+const body: unknown = await response.json();
+if (isProject(body)) {
+  console.log(body.name);
+}
+```
+
 ## File size
 
 - Keep files **under 200–250 lines**.
@@ -59,4 +76,7 @@ npx vitest run --coverage   # run tests with coverage report
 2. Make small, focused changes.
 3. Write or update tests.
 4. Run `npx vitest run` and make sure **all tests pass** before considering the task done.
-5. Check that no file has grown beyond 250 lines.
+5. Check for type errors in each part you changed. Vitest does not type check, so passing tests are not enough:
+   - `web/`: `npm run build`
+   - `server/`: `npm run typecheck`
+6. Check that no file has grown beyond 250 lines.
