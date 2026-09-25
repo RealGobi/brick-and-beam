@@ -1,5 +1,5 @@
 import React from 'react'
-import Toast from '../../../componants/MUI/Toast/Toast'
+import Toast from '../../componants/MUI/Toast/Toast'
 
 interface Props { }
 
