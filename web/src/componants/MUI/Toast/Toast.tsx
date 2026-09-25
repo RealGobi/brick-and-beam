@@ -8,11 +8,11 @@ export default function Toast(props: { open: boolean, setOpen?: (value:boolean) 
                 autoHideDuration={3000}
                 open={props.open}
                 variant={'soft'}
-                onClose={(event, reason) => {
+                onClose={(_event, reason) => {
                     if (reason === 'clickaway') {
                         return;
                     }
-                    props.setOpen ? props.setOpen(false): undefined
+                    props.setOpen?.(false)
                 }}
             >
                 {props.message}
