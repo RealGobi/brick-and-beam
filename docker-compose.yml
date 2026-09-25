@@ -1,0 +1,24 @@
+# Local development database. Start with: docker compose up -d
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      # Development-only credentials, must match DATABASE_URL in server/.env
+      POSTGRES_USER: brickbeam
+      POSTGRES_PASSWORD: brickbeam
+      POSTGRES_DB: brickbeam
+    ports:
+      # Bound to 127.0.0.1 so the database is not reachable from the network
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Postgres 18 stores data under /var/lib/postgresql/<version>, so mount the parent
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brickbeam -d brickbeam"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

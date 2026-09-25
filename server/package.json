@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
@@ -16,7 +16,8 @@
   "type": "commonjs",
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "hono": "^4.13.7"
+    "hono": "^4.13.7",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
