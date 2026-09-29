@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { makeStep } from '../test/makeStep'
+import { makeStep, makeStepImage } from '../test/makeStep'
 import { StepForm } from './StepForm'
 
 function mockServerResponse(body: unknown, status: number) {
@@ -113,5 +113,71 @@ describe('StepForm: editing', () => {
         expect(options?.method).toBe('PATCH')
         expect(JSON.parse(String(options?.body))).toMatchObject({ name: 'Riva allt kakel' })
         expect(onSaved).toHaveBeenCalledWith(updated)
+    })
+})
+
+describe('StepForm: images for a new step', () => {
+    const json = (body: unknown, status: number) => new Response(JSON.stringify(body), { status })
+    const photo = (name = 'fore.jpg') => new File(['jpg'], name, { type: 'image/jpeg' })
+
+    it('creates the step and then uploads the chosen images to it', async () => {
+        const created = makeStep({ id: 's1', name: 'Riva kakel' })
+        const uploaded = [makeStepImage('fore.jpg'), makeStepImage('efter.jpg')]
+        const fetchMock = vi
+            .spyOn(globalThis, 'fetch')
+            .mockResolvedValueOnce(json(created, 201))
+            .mockResolvedValueOnce(json(uploaded, 201))
+        const { user, onSaved } = renderForm()
+
+        await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
+        await user.upload(screen.getByLabelText(/^Bilder/), [photo('fore.jpg'), photo('efter.jpg')])
+        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
+
+        expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/api/projects/p1/steps', '/api/steps/s1/images'])
+        expect(onSaved).toHaveBeenCalledWith({ ...created, images: uploaded })
+    })
+
+    it('does not upload anything when no images are chosen', async () => {
+        const fetchMock = mockServerResponse(makeStep(), 201)
+        const { user } = renderForm()
+
+        await user.type(screen.getByLabelText('Namn på steget'), 'Måla')
+        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
+
+        expect(fetchMock).toHaveBeenCalledOnce()
+    })
+
+    it('keeps the created step and passes a warning when the upload fails', async () => {
+        const created = makeStep({ id: 's1' })
+        vi.spyOn(globalThis, 'fetch')
+            .mockResolvedValueOnce(json(created, 201))
+            .mockResolvedValueOnce(json({ error: 'Uppladdningen är för stor' }, 413))
+        const { user, onSaved } = renderForm()
+
+        await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
+        await user.upload(screen.getByLabelText(/^Bilder/), photo())
+        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
+
+        expect(onSaved).toHaveBeenCalledWith(created, expect.stringContaining('Uppladdningen är för stor'))
+    })
+
+    it('stops before saving anything when a chosen file is not a supported image', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch')
+        render(<StepForm projectId="p1" onSaved={vi.fn()} onCancel={vi.fn()} />)
+        // Skip the file picker's own type filter, like a browser that lets any file through
+        const user = userEvent.setup({ applyAccept: false })
+
+        await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
+        await user.upload(screen.getByLabelText(/^Bilder/), new File(['%PDF'], 'ritning.pdf', { type: 'application/pdf' }))
+        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
+
+        expect(screen.getByRole('alert')).toHaveTextContent('ritning.pdf är inte en bild som stöds')
+        expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('has no image field when editing, since the card handles those images', () => {
+        render(<StepForm projectId="p1" step={makeStep()} onSaved={vi.fn()} onCancel={vi.fn()} />)
+
+        expect(screen.queryByLabelText(/^Bilder/)).not.toBeInTheDocument()
     })
 })

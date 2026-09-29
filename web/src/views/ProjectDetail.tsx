@@ -23,6 +23,7 @@ function ProjectPage({ projectId }: { projectId: string }) {
     const { project, steps, loading, error, setProject, saveStep, removeStep, setStepImages } =
         useProjectDetails(projectId)
     const [showStepForm, setShowStepForm] = useState(false)
+    const [uploadWarning, setUploadWarning] = useState<string | null>(null)
 
     if (loading) return <p className="empty">Hämtar projektet…</p>
     if (error || !project) {
@@ -34,9 +35,10 @@ function ProjectPage({ projectId }: { projectId: string }) {
         )
     }
 
-    function handleStepCreated(step: Step) {
+    function handleStepCreated(step: Step, warning?: string) {
         saveStep(step)
         setShowStepForm(false)
+        setUploadWarning(warning ?? null)
     }
 
     return (
@@ -52,6 +54,8 @@ function ProjectPage({ projectId }: { projectId: string }) {
                         </button>
                     )}
                 </div>
+
+                {uploadWarning && <p className="form-error" role="alert">{uploadWarning}</p>}
 
                 {showStepForm && (
                     <StepForm

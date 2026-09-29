@@ -1,5 +1,16 @@
 import { useState, type FormEvent } from 'react'
-import { createStep, isStepStatus, updateStep, stepStatuses, type Step, type StepStatus } from '../api/steps'
+import {
+    acceptedImageTypes,
+    createStep,
+    isStepStatus,
+    stepStatuses,
+    updateStep,
+    uploadStepImages,
+    type NewStepInput,
+    type Step,
+    type StepStatus,
+} from '../api/steps'
+import { checkImageFiles } from '../utils/checkImageFiles'
 import { stepStatusLabels } from '../utils/formatProject'
 import './Form.css'
 
@@ -7,7 +18,8 @@ type StepFormProps = {
     projectId: string
     /** The step to edit. Leave out to create a new step. */
     step?: Step
-    onSaved: (step: Step) => void
+    /** Gets a warning when a new step was saved but its images could not be uploaded. */
+    onSaved: (step: Step, warning?: string) => void
     onCancel: () => void
 }
 
@@ -24,9 +36,22 @@ function toFormValues(step: Step): FormValues {
     return { name: step.name, description: step.description, status: step.status, date: step.date ?? '' }
 }
 
-/** Form for adding or editing a step. Images are handled on the step card. */
+function toStepInput(values: FormValues): NewStepInput {
+    return {
+        name: values.name.trim(),
+        description: values.description.trim(),
+        status: values.status,
+        date: values.date || null,
+    }
+}
+
+/**
+ * Form for adding or editing a step. New steps can get images right away,
+ * images of an existing step are handled on its card.
+ */
 export function StepForm({ projectId, step, onSaved, onCancel }: StepFormProps) {
     const [values, setValues] = useState(step ? toFormValues(step) : emptyValues)
+    const [files, setFiles] = useState<File[]>([])
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const saveLabel = step ? 'Spara ändringar' : 'Spara steg'
@@ -35,19 +60,35 @@ export function StepForm({ projectId, step, onSaved, onCancel }: StepFormProps) 
         setValues((previous) => ({ ...previous, [field]: value }))
     }
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault()
-        setSaving(true)
-        setError(null)
+    /** Creates the step, then uploads the images. The step is kept even if the upload fails. */
+    async function createWithImages(): Promise<void> {
+        const created = await createStep(projectId, toStepInput(values))
+        if (files.length === 0) {
+            onSaved(created)
+            return
+        }
 
         try {
-            const input = {
-                name: values.name.trim(),
-                description: values.description.trim(),
-                status: values.status,
-                date: values.date || null,
-            }
-            onSaved(step ? await updateStep(step.id, input) : await createStep(projectId, input))
+            onSaved({ ...created, images: await uploadStepImages(created.id, files) })
+        } catch (uploadError) {
+            const reason = uploadError instanceof Error ? uploadError.message : 'okänt fel'
+            onSaved(created, `Steget sparades, men bilderna kunde inte laddas upp (${reason}). Försök igen på steget.`)
+        }
+    }
+
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+        const fileError = checkImageFiles(files)
+        if (fileError) {
+            setError(fileError)
+            return
+        }
+
+        setSaving(true)
+        setError(null)
+        try {
+            if (step) onSaved(await updateStep(step.id, toStepInput(values)))
+            else await createWithImages()
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : 'Kunde inte spara steget')
             setSaving(false)
@@ -91,6 +132,18 @@ export function StepForm({ projectId, step, onSaved, onCancel }: StepFormProps) 
                     <input type="date" value={values.date} onChange={(e) => update('date', e.target.value)} />
                 </label>
             </div>
+
+            {!step && (
+                <label className="field">
+                    <span>Bilder (valfritt, högst 10 st, max 10 MB var)</span>
+                    <input
+                        type="file"
+                        multiple
+                        accept={acceptedImageTypes.join(',')}
+                        onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                    />
+                </label>
+            )}
 
             {error && <p className="form-error" role="alert">{error}</p>}
 

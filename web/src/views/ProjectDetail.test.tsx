@@ -176,3 +176,22 @@ describe('ProjectDetail: changing things', () => {
         expect(screen.getByRole('heading', { name: 'Ny dusch' })).toBeInTheDocument()
     })
 })
+
+describe('ProjectDetail: images for a new step', () => {
+    it('shows a warning and the new step when its images could not be uploaded', async () => {
+        const fetchMock = mockServer([])
+        const user = renderPage()
+        await screen.findByText('Inga steg än.')
+        fetchMock
+            .mockResolvedValueOnce(json(makeStep({ id: 's1', name: 'Riva kakel' }), 201))
+            .mockResolvedValueOnce(json({ error: 'Uppladdningen är för stor' }, 413))
+
+        await user.click(screen.getByRole('button', { name: 'Nytt steg' }))
+        await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
+        await user.upload(screen.getByLabelText(/^Bilder/), new File(['jpg'], 'fore.jpg', { type: 'image/jpeg' }))
+        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
+
+        expect(await screen.findByRole('heading', { name: 'Riva kakel' })).toBeInTheDocument()
+        expect(screen.getByRole('alert')).toHaveTextContent('Steget sparades, men bilderna kunde inte laddas upp')
+    })
+})
