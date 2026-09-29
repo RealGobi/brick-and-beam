@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeProject } from '../test/makeProject'
-import { createProject, fetchProject, fetchProjects, type NewProjectInput } from './projects'
+import {
+    createProject,
+    deleteProject,
+    fetchProject,
+    fetchProjects,
+    updateProject,
+    type NewProjectInput,
+} from './projects'
 
 const project = makeProject({ status: 'ongoing', startDate: '2026-09-01', budget: 85000 })
 
@@ -113,5 +120,42 @@ describe('createProject', () => {
         mockFetchResponse({ error: 'name krävs' }, 400)
 
         await expect(createProject(input)).rejects.toThrow('name krävs')
+    })
+})
+
+describe('updateProject', () => {
+    it('sends only the changed fields with PATCH', async () => {
+        const fetchMock = mockFetchResponse(project)
+
+        await updateProject('a1', { budget: 90000 })
+
+        expect(fetchMock).toHaveBeenCalledWith('/api/projects/a1', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ budget: 90000 }),
+        })
+    })
+
+    it('throws with the validation message from the server', async () => {
+        mockFetchResponse({ error: 'endDate får inte vara före startDate' }, 400)
+
+        await expect(updateProject('a1', { endDate: '2020-01-01' })).rejects.toThrow(
+            'endDate får inte vara före startDate',
+        )
+    })
+})
+
+describe('deleteProject', () => {
+    it('sends a DELETE request and accepts an empty 204 response', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+
+        await expect(deleteProject('a1')).resolves.toBeUndefined()
+        expect(fetchMock).toHaveBeenCalledWith('/api/projects/a1', { method: 'DELETE' })
+    })
+
+    it('throws with the server message when the project does not exist', async () => {
+        mockFetchResponse({ error: 'Projektet finns inte' }, 404)
+
+        await expect(deleteProject('a1')).rejects.toThrow('Projektet finns inte')
     })
 })

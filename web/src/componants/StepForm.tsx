@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
-import { createStep, isStepStatus, stepStatuses, type Step, type StepStatus } from '../api/steps'
+import { createStep, isStepStatus, updateStep, stepStatuses, type Step, type StepStatus } from '../api/steps'
 import { stepStatusLabels } from '../utils/formatProject'
 import './Form.css'
 
-type NewStepFormProps = {
+type StepFormProps = {
     projectId: string
-    onCreated: (step: Step) => void
+    /** The step to edit. Leave out to create a new step. */
+    step?: Step
+    onSaved: (step: Step) => void
     onCancel: () => void
 }
 
@@ -18,11 +20,16 @@ type FormValues = {
 
 const emptyValues: FormValues = { name: '', description: '', status: 'ongoing', date: '' }
 
-/** Form for adding a step to a project. Images are added on the step afterwards. */
-export function NewStepForm({ projectId, onCreated, onCancel }: NewStepFormProps) {
-    const [values, setValues] = useState(emptyValues)
+function toFormValues(step: Step): FormValues {
+    return { name: step.name, description: step.description, status: step.status, date: step.date ?? '' }
+}
+
+/** Form for adding or editing a step. Images are handled on the step card. */
+export function StepForm({ projectId, step, onSaved, onCancel }: StepFormProps) {
+    const [values, setValues] = useState(step ? toFormValues(step) : emptyValues)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const saveLabel = step ? 'Spara ändringar' : 'Spara steg'
 
     function update<Field extends keyof FormValues>(field: Field, value: FormValues[Field]) {
         setValues((previous) => ({ ...previous, [field]: value }))
@@ -34,13 +41,13 @@ export function NewStepForm({ projectId, onCreated, onCancel }: NewStepFormProps
         setError(null)
 
         try {
-            const step = await createStep(projectId, {
+            const input = {
                 name: values.name.trim(),
                 description: values.description.trim(),
                 status: values.status,
                 date: values.date || null,
-            })
-            onCreated(step)
+            }
+            onSaved(step ? await updateStep(step.id, input) : await createStep(projectId, input))
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : 'Kunde inte spara steget')
             setSaving(false)
@@ -90,7 +97,7 @@ export function NewStepForm({ projectId, onCreated, onCancel }: NewStepFormProps
             <div className="form-actions">
                 <button type="button" className="button" onClick={onCancel}>Avbryt</button>
                 <button type="submit" className="button button-primary" disabled={saving}>
-                    {saving ? 'Sparar…' : 'Spara steg'}
+                    {saving ? 'Sparar…' : saveLabel}
                 </button>
             </div>
         </form>

@@ -1,4 +1,4 @@
-import { errorFromResponse } from './projects'
+import { errorFromResponse, expectSuccess } from './projects'
 
 export const stepStatuses = ['ongoing', 'done'] as const
 
@@ -100,4 +100,24 @@ export async function uploadStepImages(stepId: string, files: File[]): Promise<S
     // No Content-Type header: the browser sets it, including the multipart boundary
     const response = await fetch(`/api/steps/${stepId}/images`, { method: 'POST', body: form })
     return readResponse(response, isImageList)
+}
+
+/** Changes some fields of a step. Fields left out keep their saved value. */
+export async function updateStep(stepId: string, changes: Partial<NewStepInput>): Promise<Step> {
+    const response = await fetch(`/api/steps/${stepId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changes),
+    })
+    return readResponse(response, isStep)
+}
+
+/** Deletes a step and its images. */
+export async function deleteStep(stepId: string): Promise<void> {
+    await expectSuccess(await fetch(`/api/steps/${stepId}`, { method: 'DELETE' }))
+}
+
+/** Deletes one image from a step. */
+export async function deleteStepImage(imageId: string): Promise<void> {
+    await expectSuccess(await fetch(`/api/images/${imageId}`, { method: 'DELETE' }))
 }

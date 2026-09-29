@@ -87,3 +87,34 @@
     padding: 20px;
   }
 }
+
+.step-images li {
+  position: relative;
+}
+
+.step-image-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  font-size: 18px;
+  line-height: 1;
+  color: #fff;
+  background: rgb(31 28 24 / 70%);
+  cursor: pointer;
+}
+
+.step-image-delete:hover {
+  background: #a33a2a;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import type { Project } from '../api/projects'
-import { NewProjectForm } from '../componants/NewProjectForm'
+import { ProjectForm } from '../componants/ProjectForm'
 import { useProjects } from '../hooks/useProjects'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
 import './Dashboard.css'
@@ -30,7 +30,7 @@ function Projects() {
                 )}
             </header>
 
-            {showForm && <NewProjectForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />}
+            {showForm && <ProjectForm onSaved={handleCreated} onCancel={() => setShowForm(false)} />}
 
             <ProjectList projects={projects} loading={loading} error={error} />
         </div>

@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
-import type { Project } from '../api/projects'
+import { Link, useNavigate, useParams } from 'react-router'
+import { deleteProject, type Project } from '../api/projects'
 import type { Step } from '../api/steps'
-import { NewStepForm } from '../componants/NewStepForm'
+import { ProjectForm } from '../componants/ProjectForm'
 import { StepCard } from '../componants/StepCard'
+import { StepForm } from '../componants/StepForm'
 import { useProjectDetails } from '../hooks/useProjectDetails'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
 import './Dashboard.css'
@@ -19,7 +20,8 @@ function ProjectDetail() {
 }
 
 function ProjectPage({ projectId }: { projectId: string }) {
-    const { project, steps, loading, error, addStep, addImages } = useProjectDetails(projectId)
+    const { project, steps, loading, error, setProject, saveStep, removeStep, setStepImages } =
+        useProjectDetails(projectId)
     const [showStepForm, setShowStepForm] = useState(false)
 
     if (loading) return <p className="empty">Hämtar projektet…</p>
@@ -33,13 +35,13 @@ function ProjectPage({ projectId }: { projectId: string }) {
     }
 
     function handleStepCreated(step: Step) {
-        addStep(step)
+        saveStep(step)
         setShowStepForm(false)
     }
 
     return (
         <div className="dashboard">
-            <ProjectHeader project={project} />
+            <ProjectHeader project={project} onSaved={setProject} />
 
             <section className="project-steps">
                 <div className="section-head">
@@ -52,21 +54,66 @@ function ProjectPage({ projectId }: { projectId: string }) {
                 </div>
 
                 {showStepForm && (
-                    <NewStepForm
+                    <StepForm
                         projectId={project.id}
-                        onCreated={handleStepCreated}
+                        onSaved={handleStepCreated}
                         onCancel={() => setShowStepForm(false)}
                     />
                 )}
 
                 {steps.length === 0 && !showStepForm && <p className="empty">Inga steg än.</p>}
-                {steps.map((step) => <StepCard key={step.id} step={step} onImagesAdded={addImages} />)}
+                {steps.map((step) => (
+                    <StepCard
+                        key={step.id}
+                        step={step}
+                        onSaved={saveStep}
+                        onDeleted={removeStep}
+                        onImagesChange={setStepImages}
+                    />
+                ))}
             </section>
         </div>
     )
 }
 
-function ProjectHeader({ project }: { project: Project }) {
+type ProjectHeaderProps = {
+    project: Project
+    onSaved: (project: Project) => void
+}
+
+function ProjectHeader({ project, onSaved }: ProjectHeaderProps) {
+    const navigate = useNavigate()
+    const [editing, setEditing] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    async function handleDelete() {
+        if (!window.confirm(`Ta bort projektet "${project.name}"? Alla steg och bilder tas också bort.`)) return
+
+        setDeleting(true)
+        setError(null)
+        try {
+            await deleteProject(project.id)
+            navigate('/project')
+        } catch (deleteError) {
+            setError(deleteError instanceof Error ? deleteError.message : 'Kunde inte ta bort projektet')
+            setDeleting(false)
+        }
+    }
+
+    if (editing) {
+        return (
+            <ProjectForm
+                project={project}
+                onSaved={(saved) => {
+                    onSaved(saved)
+                    setEditing(false)
+                }}
+                onCancel={() => setEditing(false)}
+            />
+        )
+    }
+
     return (
         <header className="dashboard-hero">
             <Link to="/project" className="see-all">← Alla projekt</Link>
@@ -90,6 +137,17 @@ function ProjectHeader({ project }: { project: Project }) {
                     <dd>{formatBudget(project.budget)}</dd>
                 </div>
             </dl>
+
+            {error && <p className="form-error" role="alert">{error}</p>}
+
+            <div className="project-actions">
+                <button type="button" className="button" disabled={deleting} onClick={() => setEditing(true)}>
+                    Redigera
+                </button>
+                <button type="button" className="button button-danger" disabled={deleting} onClick={handleDelete}>
+                    {deleting ? 'Tar bort…' : 'Ta bort projekt'}
+                </button>
+            </div>
         </header>
     )
 }

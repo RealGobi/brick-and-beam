@@ -10,8 +10,12 @@ type ProjectDetailsState = {
 }
 
 type UseProjectDetailsResult = ProjectDetailsState & {
-    addStep: (step: Step) => void
-    addImages: (stepId: string, images: StepImage[]) => void
+    setProject: (project: Project) => void
+    /** Adds a new step or replaces an existing one with the same id, keeping date order. */
+    saveStep: (step: Step) => void
+    removeStep: (stepId: string) => void
+    /** Replaces only the images, so a status change made meanwhile is kept. */
+    setStepImages: (stepId: string, images: StepImage[]) => void
 }
 
 const initialState: ProjectDetailsState = { project: null, steps: [], loading: true, error: null }
@@ -27,7 +31,7 @@ function compareSteps(a: Step, b: Step): number {
 }
 
 /**
- * Loads a project and its steps, and keeps them updated as steps and images are added.
+ * Loads a project and its steps, and keeps them updated as they change.
  * Render the component with key={projectId} so the state starts over when the id changes.
  */
 export function useProjectDetails(projectId: string): UseProjectDetailsResult {
@@ -50,18 +54,27 @@ export function useProjectDetails(projectId: string): UseProjectDetailsResult {
         }
     }, [projectId])
 
-    const addStep = useCallback((step: Step) => {
-        setState((previous) => ({ ...previous, steps: [...previous.steps, step].sort(compareSteps) }))
+    const setProject = useCallback((project: Project) => {
+        setState((previous) => ({ ...previous, project }))
     }, [])
 
-    const addImages = useCallback((stepId: string, images: StepImage[]) => {
+    const saveStep = useCallback((step: Step) => {
+        setState((previous) => {
+            const otherSteps = previous.steps.filter((existing) => existing.id !== step.id)
+            return { ...previous, steps: [...otherSteps, step].sort(compareSteps) }
+        })
+    }, [])
+
+    const removeStep = useCallback((stepId: string) => {
+        setState((previous) => ({ ...previous, steps: previous.steps.filter((step) => step.id !== stepId) }))
+    }, [])
+
+    const setStepImages = useCallback((stepId: string, images: StepImage[]) => {
         setState((previous) => ({
             ...previous,
-            steps: previous.steps.map((step) =>
-                step.id === stepId ? { ...step, images: [...step.images, ...images] } : step,
-            ),
+            steps: previous.steps.map((step) => (step.id === stepId ? { ...step, images } : step)),
         }))
     }, [])
 
-    return { ...state, addStep, addImages }
+    return { ...state, setProject, saveStep, removeStep, setStepImages }
 }

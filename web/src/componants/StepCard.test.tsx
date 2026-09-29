@@ -2,16 +2,16 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Step } from '../api/steps'
-import { makeStep, makeStepImage } from '../test/makeStep'
+import { makeStep } from '../test/makeStep'
 import { StepCard } from './StepCard'
 
 function renderCard(step: Step) {
-    const onImagesAdded = vi.fn()
-    render(<StepCard step={step} onImagesAdded={onImagesAdded} />)
-    return { onImagesAdded, user: userEvent.setup() }
+    const handlers = { onSaved: vi.fn(), onDeleted: vi.fn(), onImagesChange: vi.fn() }
+    render(<StepCard step={step} {...handlers} />)
+    return { ...handlers, user: userEvent.setup() }
 }
 
-const photo = () => new File(['jpg'], 'fore.jpg', { type: 'image/jpeg' })
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
 afterEach(() => {
     vi.restoreAllMocks()
@@ -33,42 +33,67 @@ describe('StepCard', () => {
         expect(screen.getByText('Inget datum')).toBeInTheDocument()
     })
 
-    it('shows each image as a link to the full size image', () => {
-        renderCard(makeStep({ images: [makeStepImage('a.jpg'), makeStepImage('b.png')] }))
+    it('marks an ongoing step as done', async () => {
+        const updated = makeStep({ id: 's1', status: 'done' })
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(updated))
+        const { user, onSaved } = renderCard(makeStep({ id: 's1', status: 'ongoing' }))
 
-        expect(screen.getByRole('img', { name: 'a.jpg' })).toHaveAttribute('src', '/api/uploads/a.jpg')
-        expect(screen.getByRole('img', { name: 'b.png' }).closest('a')).toHaveAttribute('href', '/api/uploads/b.png')
+        await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
+
+        const [url, options] = fetchMock.mock.calls[0]
+        expect(url).toBe('/api/steps/s1')
+        expect(JSON.parse(String(options?.body))).toEqual({ status: 'done' })
+        expect(onSaved).toHaveBeenCalledWith(updated)
     })
 
-    it('uploads the chosen images and reports them', async () => {
-        const saved = [makeStepImage('fore.jpg')]
-        const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(saved), { status: 201 }))
-        const { user, onImagesAdded } = renderCard(makeStep({ id: 's1' }))
+    it('marks a done step as ongoing again', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(makeStep()))
+        const { user } = renderCard(makeStep({ status: 'done' }))
 
-        await user.upload(screen.getByLabelText('Lägg till bilder'), photo())
+        await user.click(screen.getByRole('button', { name: 'Markera som pågående' }))
 
-        expect(fetchMock.mock.calls[0][0]).toBe('/api/steps/s1/images')
-        expect(onImagesAdded).toHaveBeenCalledWith('s1', saved)
+        expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ status: 'ongoing' })
     })
 
-    it('shows the error when the upload is rejected', async () => {
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(JSON.stringify({ error: 'fore.jpg är större än 10 MB' }), { status: 400 }),
-        )
-        const { user, onImagesAdded } = renderCard(makeStep())
+    it('shows the error when the status cannot be changed', async () => {
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ error: 'Steget finns inte' }, 404))
+        const { user, onSaved } = renderCard(makeStep())
 
-        await user.upload(screen.getByLabelText('Lägg till bilder'), photo())
+        await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
 
-        expect(await screen.findByRole('alert')).toHaveTextContent('fore.jpg är större än 10 MB')
-        expect(onImagesAdded).not.toHaveBeenCalled()
+        expect(await screen.findByRole('alert')).toHaveTextContent('Steget finns inte')
+        expect(onSaved).not.toHaveBeenCalled()
     })
 
-    it('shows that it is uploading while the request is running', async () => {
-        vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}))
-        const { user } = renderCard(makeStep())
+    it('switches to a filled-in form when Redigera is clicked, and back on Avbryt', async () => {
+        const { user } = renderCard(makeStep({ name: 'Riva kakel' }))
 
-        await user.upload(screen.getByLabelText('Lägg till bilder'), photo())
+        await user.click(screen.getByRole('button', { name: 'Redigera' }))
+        expect(screen.getByLabelText('Namn på steget')).toHaveValue('Riva kakel')
 
-        expect(screen.getByText('Laddar upp…')).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: 'Avbryt' }))
+        expect(screen.getByRole('heading', { name: 'Riva kakel' })).toBeInTheDocument()
+    })
+
+    it('deletes the step after confirming', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+        const { user, onDeleted } = renderCard(makeStep({ id: 's1' }))
+
+        await user.click(screen.getByRole('button', { name: 'Ta bort' }))
+
+        expect(fetchMock).toHaveBeenCalledWith('/api/steps/s1', { method: 'DELETE' })
+        expect(onDeleted).toHaveBeenCalledWith('s1')
+    })
+
+    it('keeps the step when the confirmation is cancelled', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(false)
+        const fetchMock = vi.spyOn(globalThis, 'fetch')
+        const { user, onDeleted } = renderCard(makeStep())
+
+        await user.click(screen.getByRole('button', { name: 'Ta bort' }))
+
+        expect(fetchMock).not.toHaveBeenCalled()
+        expect(onDeleted).not.toHaveBeenCalled()
     })
 })

@@ -51,6 +51,11 @@ export async function errorFromResponse(response: Response): Promise<Error> {
     return new Error(`Servern svarade med ${response.status}`)
 }
 
+/** Checks a response that has no body, like 204 after a delete. */
+export async function expectSuccess(response: Response): Promise<void> {
+    if (!response.ok) throw await errorFromResponse(response)
+}
+
 /** Fetches all projects, newest first. Throws if the request fails or the data has an unexpected shape. */
 export async function fetchProjects(): Promise<Project[]> {
     const response = await fetch('/api/projects')
@@ -88,4 +93,24 @@ export async function createProject(input: NewProjectInput): Promise<Project> {
     if (!isProject(body)) throw new Error('Oväntat svar från servern')
 
     return body
+}
+
+/** Changes some fields of a project. Fields left out keep their saved value. */
+export async function updateProject(projectId: string, changes: Partial<NewProjectInput>): Promise<Project> {
+    const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changes),
+    })
+    if (!response.ok) throw await errorFromResponse(response)
+
+    const body: unknown = await response.json()
+    if (!isProject(body)) throw new Error('Oväntat svar från servern')
+
+    return body
+}
+
+/** Deletes a project with all its steps and images. */
+export async function deleteProject(projectId: string): Promise<void> {
+    await expectSuccess(await fetch(`/api/projects/${projectId}`, { method: 'DELETE' }))
 }

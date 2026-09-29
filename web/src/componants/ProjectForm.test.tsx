@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeProject } from '../test/makeProject'
-import { NewProjectForm } from './NewProjectForm'
+import { ProjectForm } from './ProjectForm'
 
 function mockServerResponse(body: unknown, status: number) {
     return vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status }))
@@ -15,17 +15,17 @@ function sentBody(fetchMock: ReturnType<typeof mockServerResponse>): unknown {
 }
 
 function renderForm() {
-    const onCreated = vi.fn()
+    const onSaved = vi.fn()
     const onCancel = vi.fn()
-    render(<NewProjectForm onCreated={onCreated} onCancel={onCancel} />)
-    return { onCreated, onCancel, user: userEvent.setup() }
+    render(<ProjectForm onSaved={onSaved} onCancel={onCancel} />)
+    return { onSaved, onCancel, user: userEvent.setup() }
 }
 
 afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('NewProjectForm', () => {
+describe('ProjectForm: new project', () => {
     it('sends every filled-in field to the server', async () => {
         const fetchMock = mockServerResponse(makeProject(), 201)
         const { user } = renderForm()
@@ -65,27 +65,27 @@ describe('NewProjectForm', () => {
         })
     })
 
-    it('passes the saved project to onCreated', async () => {
+    it('passes the created project to onSaved', async () => {
         const saved = makeProject({ name: 'Altan' })
         mockServerResponse(saved, 201)
-        const { user, onCreated } = renderForm()
+        const { user, onSaved } = renderForm()
 
         await user.type(screen.getByLabelText('Namn'), 'Altan')
         await user.click(screen.getByRole('button', { name: 'Spara projekt' }))
 
-        expect(onCreated).toHaveBeenCalledWith(saved)
+        expect(onSaved).toHaveBeenCalledWith(saved)
     })
 
     it('shows the error from the server and keeps the input', async () => {
         mockServerResponse({ error: 'endDate får inte vara före startDate' }, 400)
-        const { user, onCreated } = renderForm()
+        const { user, onSaved } = renderForm()
 
         await user.type(screen.getByLabelText('Namn'), 'Altan')
         await user.click(screen.getByRole('button', { name: 'Spara projekt' }))
 
         expect(await screen.findByRole('alert')).toHaveTextContent('endDate får inte vara före startDate')
         expect(screen.getByLabelText('Namn')).toHaveValue('Altan')
-        expect(onCreated).not.toHaveBeenCalled()
+        expect(onSaved).not.toHaveBeenCalled()
     })
 
     it('does not send anything when the name is empty', async () => {
@@ -103,5 +103,57 @@ describe('NewProjectForm', () => {
         await user.click(screen.getByRole('button', { name: 'Avbryt' }))
 
         expect(onCancel).toHaveBeenCalledOnce()
+    })
+})
+
+describe('ProjectForm: editing', () => {
+    const existing = makeProject({
+        id: 'p1',
+        name: 'Nytt badrum',
+        description: 'Kakel',
+        status: 'ongoing',
+        startDate: '2026-09-01',
+        endDate: null,
+        budget: 85000,
+    })
+
+    function renderEditForm() {
+        const onSaved = vi.fn()
+        render(<ProjectForm project={existing} onSaved={onSaved} onCancel={vi.fn()} />)
+        return { onSaved, user: userEvent.setup() }
+    }
+
+    it('starts with the saved values filled in', () => {
+        renderEditForm()
+
+        expect(screen.getByLabelText('Namn')).toHaveValue('Nytt badrum')
+        expect(screen.getByLabelText('Beskrivning')).toHaveValue('Kakel')
+        expect(screen.getByLabelText('Status')).toHaveValue('ongoing')
+        expect(screen.getByLabelText('Startdatum')).toHaveValue('2026-09-01')
+        expect(screen.getByLabelText('Slutdatum')).toHaveValue('')
+        expect(screen.getByLabelText('Budget (kr)')).toHaveValue(85000)
+    })
+
+    it('sends the changes to the project with PATCH', async () => {
+        const fetchMock = mockServerResponse(existing, 200)
+        const { user } = renderEditForm()
+
+        await user.clear(screen.getByLabelText('Budget (kr)'))
+        await user.click(screen.getByRole('button', { name: 'Spara ändringar' }))
+
+        const [url, options] = fetchMock.mock.calls[0]
+        expect(url).toBe('/api/projects/p1')
+        expect(options?.method).toBe('PATCH')
+        expect(sentBody(fetchMock)).toMatchObject({ name: 'Nytt badrum', budget: null })
+    })
+
+    it('passes the updated project to onSaved', async () => {
+        const updated = { ...existing, name: 'Badrum' }
+        mockServerResponse(updated, 200)
+        const { user, onSaved } = renderEditForm()
+
+        await user.click(screen.getByRole('button', { name: 'Spara ändringar' }))
+
+        expect(onSaved).toHaveBeenCalledWith(updated)
     })
 })

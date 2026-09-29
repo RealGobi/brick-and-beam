@@ -1,34 +1,60 @@
-import { useState, type ChangeEvent } from 'react'
-import { acceptedImageTypes, uploadStepImages, type Step, type StepImage } from '../api/steps'
+import { useState } from 'react'
+import { deleteStep, updateStep, type Step, type StepImage } from '../api/steps'
 import { formatDate, stepStatusLabels } from '../utils/formatProject'
+import { StepForm } from './StepForm'
+import { StepImages } from './StepImages'
 import './StepCard.css'
 
 type StepCardProps = {
     step: Step
-    onImagesAdded: (stepId: string, images: StepImage[]) => void
+    onSaved: (step: Step) => void
+    onDeleted: (stepId: string) => void
+    onImagesChange: (stepId: string, images: StepImage[]) => void
 }
 
-/** One step with its images and a button for uploading more. */
-export function StepCard({ step, onImagesAdded }: StepCardProps) {
-    const [uploading, setUploading] = useState(false)
+/** One step with its images, and buttons for changing status, editing and deleting it. */
+export function StepCard({ step, onSaved, onDeleted, onImagesChange }: StepCardProps) {
+    const [editing, setEditing] = useState(false)
+    const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    async function handleFilesChosen(event: ChangeEvent<HTMLInputElement>) {
-        const input = event.target
-        const files = Array.from(input.files ?? [])
-        if (files.length === 0) return
-
-        setUploading(true)
+    async function run(action: () => Promise<void>, fallbackError: string) {
+        setBusy(true)
         setError(null)
         try {
-            onImagesAdded(step.id, await uploadStepImages(step.id, files))
-        } catch (uploadError) {
-            setError(uploadError instanceof Error ? uploadError.message : 'Kunde inte ladda upp bilderna')
+            await action()
+        } catch (actionError) {
+            setError(actionError instanceof Error ? actionError.message : fallbackError)
         } finally {
-            setUploading(false)
-            // Clear the picker so the same file can be chosen again after an error
-            input.value = ''
+            setBusy(false)
         }
+    }
+
+    function toggleStatus() {
+        const status = step.status === 'done' ? 'ongoing' : 'done'
+        return run(async () => onSaved(await updateStep(step.id, { status })), 'Kunde inte ändra status')
+    }
+
+    function handleDelete() {
+        if (!window.confirm(`Ta bort steget "${step.name}"? Dess bilder tas också bort.`)) return
+        return run(async () => {
+            await deleteStep(step.id)
+            onDeleted(step.id)
+        }, 'Kunde inte ta bort steget')
+    }
+
+    if (editing) {
+        return (
+            <StepForm
+                projectId={step.projectId}
+                step={step}
+                onSaved={(saved) => {
+                    onSaved(saved)
+                    setEditing(false)
+                }}
+                onCancel={() => setEditing(false)}
+            />
+        )
     }
 
     return (
@@ -41,31 +67,21 @@ export function StepCard({ step, onImagesAdded }: StepCardProps) {
             <p className="step-card-date">{step.date ? formatDate(step.date) : 'Inget datum'}</p>
             {step.description && <p className="step-card-description">{step.description}</p>}
 
-            {step.images.length > 0 && (
-                <ul className="step-images">
-                    {step.images.map((image) => (
-                        <li key={image.id}>
-                            <a href={image.url} target="_blank" rel="noreferrer">
-                                <img src={image.url} alt={image.originalName} loading="lazy" />
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            )}
+            <StepImages stepId={step.id} images={step.images} onChange={(images) => onImagesChange(step.id, images)} />
 
             {error && <p className="form-error" role="alert">{error}</p>}
 
-            <label className={`button step-upload${uploading ? ' is-disabled' : ''}`}>
-                {uploading ? 'Laddar upp…' : 'Lägg till bilder'}
-                <input
-                    type="file"
-                    className="visually-hidden"
-                    accept={acceptedImageTypes.join(',')}
-                    multiple
-                    disabled={uploading}
-                    onChange={handleFilesChosen}
-                />
-            </label>
+            <div className="step-actions">
+                <button type="button" className="button" disabled={busy} onClick={toggleStatus}>
+                    {step.status === 'done' ? 'Markera som pågående' : 'Markera som klar'}
+                </button>
+                <button type="button" className="button" disabled={busy} onClick={() => setEditing(true)}>
+                    Redigera
+                </button>
+                <button type="button" className="button button-danger" disabled={busy} onClick={handleDelete}>
+                    Ta bort
+                </button>
+            </div>
         </article>
     )
 }

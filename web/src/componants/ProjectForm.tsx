@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import {
     createProject,
     isProjectStatus,
+    updateProject,
     projectStatuses,
     type NewProjectInput,
     type Project,
@@ -10,8 +11,10 @@ import {
 import { statusLabels } from '../utils/formatProject'
 import './Form.css'
 
-type NewProjectFormProps = {
-    onCreated: (project: Project) => void
+type ProjectFormProps = {
+    /** The project to edit. Leave out to create a new project. */
+    project?: Project
+    onSaved: (project: Project) => void
     onCancel: () => void
 }
 
@@ -34,6 +37,17 @@ const emptyValues: FormValues = {
     budget: '',
 }
 
+function toFormValues(project: Project): FormValues {
+    return {
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        startDate: project.startDate ?? '',
+        endDate: project.endDate ?? '',
+        budget: project.budget === null ? '' : String(project.budget),
+    }
+}
+
 function toNewProjectInput(values: FormValues): NewProjectInput {
     return {
         name: values.name.trim(),
@@ -45,11 +59,12 @@ function toNewProjectInput(values: FormValues): NewProjectInput {
     }
 }
 
-/** Form for creating a project. Validation messages come from the server. */
-export function NewProjectForm({ onCreated, onCancel }: NewProjectFormProps) {
-    const [values, setValues] = useState(emptyValues)
+/** Form for creating or editing a project. Validation messages come from the server. */
+export function ProjectForm({ project, onSaved, onCancel }: ProjectFormProps) {
+    const [values, setValues] = useState(project ? toFormValues(project) : emptyValues)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const saveLabel = project ? 'Spara ändringar' : 'Spara projekt'
 
     function update<Field extends keyof FormValues>(field: Field, value: FormValues[Field]) {
         setValues((previous) => ({ ...previous, [field]: value }))
@@ -61,7 +76,8 @@ export function NewProjectForm({ onCreated, onCancel }: NewProjectFormProps) {
         setError(null)
 
         try {
-            onCreated(await createProject(toNewProjectInput(values)))
+            const input = toNewProjectInput(values)
+            onSaved(project ? await updateProject(project.id, input) : await createProject(input))
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : 'Kunde inte spara projektet')
             setSaving(false)
@@ -134,7 +150,7 @@ export function NewProjectForm({ onCreated, onCancel }: NewProjectFormProps) {
             <div className="form-actions">
                 <button type="button" className="button" onClick={onCancel}>Avbryt</button>
                 <button type="submit" className="button button-primary" disabled={saving}>
-                    {saving ? 'Sparar…' : 'Spara projekt'}
+                    {saving ? 'Sparar…' : saveLabel}
                 </button>
             </div>
         </form>

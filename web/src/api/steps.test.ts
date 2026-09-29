@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeStep, makeStepImage } from '../test/makeStep'
-import { createStep, fetchSteps, uploadStepImages, type NewStepInput } from './steps'
+import {
+    createStep,
+    deleteStep,
+    deleteStepImage,
+    fetchSteps,
+    updateStep,
+    uploadStepImages,
+    type NewStepInput,
+} from './steps'
 
 const step = makeStep({ images: [makeStepImage('a.jpg')] })
 
@@ -90,5 +98,40 @@ describe('uploadStepImages', () => {
         mockFetchResponse({ error: 'stor.jpg är större än 10 MB' }, 400)
 
         await expect(uploadStepImages('s1', [])).rejects.toThrow('stor.jpg är större än 10 MB')
+    })
+})
+
+describe('updateStep', () => {
+    it('sends only the changed fields with PATCH and returns the step', async () => {
+        const fetchMock = mockFetchResponse(step)
+
+        const result = await updateStep('s1', { status: 'done' })
+
+        expect(fetchMock).toHaveBeenCalledWith('/api/steps/s1', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'done' }),
+        })
+        expect(result).toEqual(step)
+    })
+})
+
+describe('deleteStep and deleteStepImage', () => {
+    it('sends DELETE to the step and to the image', async () => {
+        const fetchMock = vi
+            .spyOn(globalThis, 'fetch')
+            .mockImplementation(async () => new Response(null, { status: 204 }))
+
+        await deleteStep('s1')
+        await deleteStepImage('img-1')
+
+        expect(fetchMock).toHaveBeenCalledWith('/api/steps/s1', { method: 'DELETE' })
+        expect(fetchMock).toHaveBeenCalledWith('/api/images/img-1', { method: 'DELETE' })
+    })
+
+    it('throws with the server message when the image does not exist', async () => {
+        mockFetchResponse({ error: 'Bilden finns inte' }, 404)
+
+        await expect(deleteStepImage('img-1')).rejects.toThrow('Bilden finns inte')
     })
 })

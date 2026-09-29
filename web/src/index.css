@@ -106,3 +106,13 @@ a {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+.button-danger {
+  color: #a33a2a;
+}
+
+.button-danger:hover {
+  color: var(--surface);
+  background: #a33a2a;
+  border-color: #a33a2a;
+}

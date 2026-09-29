@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -30,6 +30,7 @@ function renderPage() {
         <MemoryRouter initialEntries={['/project/p1']}>
             <Routes>
                 <Route path="/project/:projectId" element={<ProjectDetail />} />
+                <Route path="/project" element={<p>Projektlistan</p>} />
             </Routes>
         </MemoryRouter>,
     )
@@ -106,5 +107,72 @@ describe('ProjectDetail', () => {
         const stepNames = screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
         expect(stepNames).toEqual(['Riva kakel', 'Nya rör', 'Ny dusch'])
         expect(screen.queryByLabelText('Namn på steget')).not.toBeInTheDocument()
+    })
+})
+
+describe('ProjectDetail: changing things', () => {
+    it('saves an edited project and shows the new values', async () => {
+        const fetchMock = mockServer([])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Nytt badrum' })
+        fetchMock.mockResolvedValueOnce(json({ ...project, name: 'Badrum uppe' }))
+
+        await user.click(screen.getByRole('button', { name: 'Redigera' }))
+        await user.clear(screen.getByLabelText('Namn'))
+        await user.type(screen.getByLabelText('Namn'), 'Badrum uppe')
+        await user.click(screen.getByRole('button', { name: 'Spara ändringar' }))
+
+        expect(await screen.findByRole('heading', { name: 'Badrum uppe' })).toBeInTheDocument()
+    })
+
+    it('goes back to the project list after deleting the project', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+        const fetchMock = mockServer([])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Nytt badrum' })
+        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+        await user.click(screen.getByRole('button', { name: 'Ta bort projekt' }))
+
+        expect(await screen.findByText('Projektlistan')).toBeInTheDocument()
+        expect(fetchMock).toHaveBeenLastCalledWith('/api/projects/p1', { method: 'DELETE' })
+    })
+
+    it('stays on the page when deleting the project is cancelled', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(false)
+        mockServer([])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Nytt badrum' })
+
+        await user.click(screen.getByRole('button', { name: 'Ta bort projekt' }))
+
+        expect(screen.getByRole('heading', { name: 'Nytt badrum' })).toBeInTheDocument()
+    })
+
+    it('updates a step in the list when its status changes', async () => {
+        const fetchMock = mockServer([makeStep({ id: 's1', name: 'Riva kakel', status: 'ongoing' })])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Riva kakel' })
+        fetchMock.mockResolvedValueOnce(json(makeStep({ id: 's1', name: 'Riva kakel', status: 'done' })))
+
+        await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
+
+        expect(await screen.findByRole('button', { name: 'Markera som pågående' })).toBeInTheDocument()
+    })
+
+    it('removes a deleted step from the list', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+        const fetchMock = mockServer([
+            makeStep({ id: 's1', name: 'Riva kakel' }),
+            makeStep({ id: 's2', name: 'Ny dusch' }),
+        ])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Riva kakel' })
+        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+        await user.click(screen.getAllByRole('button', { name: 'Ta bort' })[0])
+
+        await waitFor(() => expect(screen.queryByRole('heading', { name: 'Riva kakel' })).not.toBeInTheDocument())
+        expect(screen.getByRole('heading', { name: 'Ny dusch' })).toBeInTheDocument()
     })
 })
