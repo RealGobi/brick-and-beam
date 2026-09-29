@@ -6,13 +6,12 @@ import ProjectDetail from "./views/ProjectDetail";
 import { SidaBar } from "./componants/SidaBar";
 
 export default function App() {
-  const [status, setStatus] = useState("hämtar...");
+  const [status, setStatus] = useState("Ansluter…");
 
   useEffect(() => {
     fetch("/api/health")
-      .then((r) => r.json())
-      .then((d) => setStatus(`Servern svarade ${d.time}`))
-      .catch((e) => setStatus(`Fel: ${e.message}`));
+      .then((response) => setStatus(response.ok ? "● Ansluten" : "Ingen kontakt med servern"))
+      .catch(() => setStatus("Ingen kontakt med servern"));
   }, []);
 
   return (

@@ -1,0 +1,82 @@
+.project-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 190px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgb(31 58 47 / 10%);
+}
+
+.project-card:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+/* Striped placeholder until projects get a cover image */
+.project-card-cover {
+  height: 110px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ebe4d6 0 10px,
+    #e3dac9 10px 20px
+  );
+}
+
+.project-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px 16px;
+}
+
+.project-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.project-card-text h3 {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-card-text time {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.project-card-add {
+  justify-content: center;
+  align-items: center;
+  color: var(--gold-text);
+  font-weight: 500;
+  background: transparent;
+  border: 1.5px dashed #d3c8b4;
+}
+
+.project-card-add:hover {
+  background: var(--surface-warm);
+  box-shadow: none;
+}

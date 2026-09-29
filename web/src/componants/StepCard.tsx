@@ -58,10 +58,10 @@ export function StepCard({ step, onSaved, onDeleted, onImagesChange }: StepCardP
     }
 
     return (
-        <article className="step-card">
+        <article className={`step-card step-card-${step.status}`}>
             <header className="step-card-head">
                 <h3>{step.name}</h3>
-                <span className={`step-status step-status-${step.status}`}>{stepStatusLabels[step.status]}</span>
+                <span className={`status-badge status-${step.status}`}>{stepStatusLabels[step.status]}</span>
             </header>
 
             <p className="step-card-date">{step.date ? formatDate(step.date) : 'Inget datum'}</p>

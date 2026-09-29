@@ -1,14 +1,39 @@
 :root {
-  --bg: #faf8f4;
-  --surface: #fdfcf9;
-  --border: #ebe6dd;
-  --text: #5a554d;
-  --text-h: #1f1c18;
-  --muted: #8a847a;
-  --active-bg: #f1ede5;
+  /* Surfaces */
+  --bg: #f3efe7;
+  --surface: #ffffff;
+  --surface-warm: #faf4e8;
+  --border: #e6dfd2;
+  --active-bg: #efe9dd;
+
+  /* Text */
+  --text: #4d4a43;
+  --text-h: #1d2b25;
+  --muted: #847c6f;
+
+  /* Brand */
+  --green-900: #1f3a2f;
+  --green-800: #284a3c;
+  --green-600: #3b6b55;
+  /* Light gold is for dots, lines and bars. Gold text uses the darker tone for contrast. */
+  --gold: #d6ad5f;
+  --gold-text: #86652a;
+
+  /* Status colors, shared by badges, dots and bars */
+  --done: #3f7a5c;
+  --done-bg: #e4efe7;
+  --ongoing: #cf8a44;
+  --ongoing-bg: #f8eadb;
+  --ongoing-text: #8a5420;
+  --planned: #b8913f;
+  --planned-bg: #f6eed9;
+  --planned-text: #7a5e22;
+
+  --danger: #a33a2a;
 
   --serif: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Figtree', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
   font: 16px/1.6 var(--sans);
   color: var(--text);
@@ -29,7 +54,8 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--serif);
   font-weight: 400;
   color: var(--text-h);
@@ -53,8 +79,8 @@ a {
 .content {
   flex: 1;
   min-width: 0;
-  padding: 48px 56px;
-  max-width: 1040px;
+  padding: 56px 56px 64px;
+  max-width: 1100px;
 }
 
 @media (max-width: 760px) {
@@ -70,12 +96,14 @@ a {
 .button {
   font: inherit;
   font-size: 15px;
+  font-weight: 500;
   color: var(--text-h);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 9px 20px;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .button:hover {
@@ -83,18 +111,29 @@ a {
 }
 
 .button-primary {
-  color: var(--surface);
-  background: var(--text-h);
-  border-color: var(--text-h);
+  color: #fff;
+  background: var(--green-900);
+  border-color: var(--green-900);
 }
 
 .button-primary:hover {
-  background: var(--text);
+  background: var(--green-600);
+  border-color: var(--green-600);
 }
 
 .button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.button-danger {
+  color: var(--danger);
+}
+
+.button-danger:hover {
+  color: #fff;
+  background: var(--danger);
+  border-color: var(--danger);
 }
 
 /* Hidden visually but still reachable for keyboards and screen readers */
@@ -107,12 +146,46 @@ a {
   white-space: nowrap;
 }
 
-.button-danger {
-  color: #a33a2a;
+/* Small uppercase label above a heading, with a short gold line in front */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-text);
 }
 
-.button-danger:hover {
-  color: var(--surface);
-  background: #a33a2a;
-  border-color: #a33a2a;
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--gold);
+}
+
+/* Status pill used for both projects and steps */
+.status-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status-planned {
+  color: var(--planned-text);
+  background: var(--planned-bg);
+}
+
+.status-ongoing {
+  color: var(--ongoing-text);
+  background: var(--ongoing-bg);
+}
+
+.status-done {
+  color: var(--done);
+  background: var(--done-bg);
 }

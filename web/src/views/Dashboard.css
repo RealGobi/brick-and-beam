@@ -1,43 +1,55 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 56px;
+  gap: 48px;
 }
 
 .dashboard-hero {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.eyebrow {
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+.dashboard-hero-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.dashboard-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .dashboard-hero h1 {
-  font-size: 52px;
-  line-height: 1.15;
+  font-size: 56px;
+  line-height: 1.1;
   letter-spacing: -0.5px;
+  /* Narrow enough that the heading breaks at the soft hyphen: "Din renoverings-" / "dagbok." */
+  max-width: 560px;
+}
+
+/* The italic accent word in a heading, e.g. "dagbok." */
+.dashboard-hero h1 em {
+  color: var(--green-600);
+}
+
+.dashboard-hero .button {
+  flex-shrink: 0;
 }
 
 .lead {
   max-width: 60ch;
-  font-size: 17px;
-}
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  font-size: 16px;
 }
 
 .section-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -47,34 +59,31 @@
 
 .see-all {
   font-size: 14px;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--green-800);
 }
 
 .see-all:hover {
-  color: var(--text-h);
+  color: var(--green-600);
+  text-decoration: underline;
 }
 
 .empty {
   color: var(--muted);
-  padding: 24px 0;
-}
-
-.project-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  padding: 16px 0 24px;
 }
 
 @media (max-width: 760px) {
   .dashboard {
-    gap: 40px;
+    gap: 36px;
   }
 
   .dashboard-hero h1 {
-    font-size: 34px;
+    font-size: 36px;
   }
 
-  .stat-grid {
-    grid-template-columns: 1fr;
+  .dashboard-hero-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

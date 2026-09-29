@@ -4,21 +4,28 @@ import { StatCard } from './StatCard'
 
 describe('StatCard', () => {
     it('shows the label and value', () => {
-        render(<StatCard label="Aktiva projekt" value={12} icon={null} />)
+        render(<StatCard label="Pågående" value={3} total={4} tone="ongoing" />)
 
-        expect(screen.getByText('Aktiva projekt')).toBeInTheDocument()
-        expect(screen.getByText('12')).toBeInTheDocument()
+        expect(screen.getByText('Pågående')).toBeInTheDocument()
+        expect(screen.getByText('3')).toBeInTheDocument()
     })
 
-    it('shows 0 when the value is zero', () => {
-        render(<StatCard label="Aktiva projekt" value={0} icon={null} />)
+    it('shows the share of all projects in the bar', () => {
+        render(<StatCard label="Pågående" value={1} total={4} tone="ongoing" />)
+
+        expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '25')
+    })
+
+    it('shows an empty bar when there are no projects at all', () => {
+        render(<StatCard label="Färdiga" value={0} total={0} tone="done" />)
 
         expect(screen.getByText('0')).toBeInTheDocument()
+        expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '0')
     })
 
-    it('renders the icon', () => {
-        render(<StatCard label="Aktiva projekt" value={1} icon={<svg data-testid="icon" />} />)
+    it('shows a full bar when every project has this status', () => {
+        render(<StatCard label="Planerade" value={2} total={2} tone="planned" />)
 
-        expect(screen.getByTestId('icon')).toBeInTheDocument()
+        expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '100')
     })
 })

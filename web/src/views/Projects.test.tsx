@@ -10,10 +10,10 @@ function mockProjects(projects: Project[]) {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(projects)))
 }
 
-// Project names are links, which need a router
-function renderProjects() {
+// Project names are links and the form is opened through the address, both need a router
+function renderProjects(path = '/project') {
     render(
-        <MemoryRouter>
+        <MemoryRouter initialEntries={[path]}>
             <Projects />
         </MemoryRouter>,
     )
@@ -93,9 +93,28 @@ describe('Projects', () => {
         const user = userEvent.setup()
         renderProjects()
 
-        await user.click(screen.getByRole('button', { name: 'Nytt projekt' }))
+        await user.click(screen.getByRole('button', { name: '+ Nytt projekt' }))
 
         expect(screen.getByLabelText('Namn')).toBeInTheDocument()
+    })
+
+    it('opens the form right away when the address asks for a new project', async () => {
+        mockProjects([])
+
+        renderProjects('/project?nytt')
+
+        expect(screen.getByLabelText('Namn')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: '+ Nytt projekt' })).not.toBeInTheDocument()
+    })
+
+    it('closes the form opened from the address when Avbryt is clicked', async () => {
+        mockProjects([])
+        const user = userEvent.setup()
+        renderProjects('/project?nytt')
+
+        await user.click(screen.getByRole('button', { name: 'Avbryt' }))
+
+        expect(screen.queryByLabelText('Namn')).not.toBeInTheDocument()
     })
 
     it('adds a created project to the top of the list and closes the form', async () => {
@@ -107,7 +126,7 @@ describe('Projects', () => {
         renderProjects()
         await screen.findByText('Kök')
 
-        await user.click(screen.getByRole('button', { name: 'Nytt projekt' }))
+        await user.click(screen.getByRole('button', { name: '+ Nytt projekt' }))
         await user.type(screen.getByLabelText('Namn'), 'Altan')
         await user.click(screen.getByRole('button', { name: 'Spara projekt' }))
 

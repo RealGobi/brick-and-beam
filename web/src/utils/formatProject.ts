@@ -44,3 +44,11 @@ export function formatBudget(budget: number | null): string {
     if (budget === null) return 'Ingen budget'
     return budgetFormat.format(budget)
 }
+
+// No fixed time zone: a timestamp should show the day it was in the user's own time
+const timestampFormat = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' })
+
+/** "2026-09-29T17:41:34.000Z" → "29 sep. 2026", in the user's local time */
+export function formatTimestamp(isoTimestamp: string): string {
+    return timestampFormat.format(new Date(isoTimestamp))
+}

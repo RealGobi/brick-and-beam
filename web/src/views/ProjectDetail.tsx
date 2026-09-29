@@ -127,7 +127,7 @@ function ProjectHeader({ project, onSaved }: ProjectHeaderProps) {
                 <div>
                     <dt>Status</dt>
                     <dd>
-                        <span className={`project-status project-status-${project.status}`}>
+                        <span className={`status-badge status-${project.status}`}>
                             {statusLabels[project.status]}
                         </span>
                     </dd>

@@ -1,29 +1,86 @@
-.stat-card {
+/* The three stat cards share one rounded panel, split by thin lines */
+.stat-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 28px 28px 32px;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.stat-card {
+  --tone: var(--muted);
+  --tone-bg: var(--active-bg);
+
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
+  padding: 26px 28px 28px;
+}
+
+.stat-card + .stat-card {
+  border-left: 1px solid var(--border);
+}
+
+.stat-card-done {
+  --tone: var(--done);
+  --tone-bg: var(--done-bg);
+}
+
+.stat-card-ongoing {
+  --tone: var(--ongoing);
+  --tone-bg: var(--ongoing-bg);
+}
+
+.stat-card-planned {
+  --tone: var(--planned);
+  --tone-bg: var(--planned-bg);
 }
 
 .stat-card-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 15px;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.stat-card-icon {
-  display: inline-flex;
-  color: var(--muted);
+.stat-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tone);
 }
 
 .stat-card-value {
   font-family: var(--serif);
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-h);
+  font-size: 44px;
   line-height: 1;
+  color: var(--text-h);
+}
+
+.stat-card-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--tone-bg);
+  overflow: hidden;
+}
+
+.stat-card-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tone);
+  transition: width 0.4s ease;
+}
+
+@media (max-width: 760px) {
+  .stat-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card + .stat-card {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
 }

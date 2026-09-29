@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatBudget, formatDate, formatPeriod } from './formatProject'
+import { formatBudget, formatDate, formatPeriod, formatTimestamp } from './formatProject'
+
+describe('formatTimestamp', () => {
+    it('shows the day of a timestamp', () => {
+        // Midday UTC is the same calendar day in every time zone near Sweden
+        expect(formatTimestamp('2026-09-29T12:00:00.000Z')).toBe('29 sep. 2026')
+    })
+})
 
 // Intl uses non-breaking spaces between the parts, so compare with normal spaces
 const normalizeSpaces = (text: string) => text.replace(/\s/g, ' ')
