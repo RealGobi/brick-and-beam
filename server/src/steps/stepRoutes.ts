@@ -1,21 +1,17 @@
 import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import { deleteImageFiles, saveImageFile } from "../images/imageStorage";
-import { MAX_IMAGE_BYTES, MAX_IMAGES_PER_UPLOAD, validateImages } from "../images/validateImages";
+import { deleteImageFiles } from "../images/imageStorage";
 import { projectExists } from "../projects/projectStore";
-import { isUuid } from "../validation";
-import { addStepImages, createStep, listSteps, stepExists } from "./stepStore";
+import { isObject, isUuid } from "../validation";
+import { createStep, deleteStep, getStep, listSteps, updateStep } from "./stepStore";
 import { validateNewStep } from "./validateNewStep";
 
-/** Routes for steps and their images, mounted under /api. */
+/** Routes for the steps of a project, mounted under /api. Image routes live in images/imageRoutes.ts. */
 export const stepRoutes = new Hono();
-
-// Room for the maximum number of full-size images plus the multipart overhead
-const MAX_UPLOAD_REQUEST_BYTES = MAX_IMAGES_PER_UPLOAD * MAX_IMAGE_BYTES + 1024 * 1024;
 
 const projectNotFound = { error: "Projektet finns inte" };
 const stepNotFound = { error: "Steget finns inte" };
 
+// Checking the format first avoids a database error for ids like "abc"
 async function isExistingProject(projectId: string): Promise<boolean> {
   return isUuid(projectId) && (await projectExists(projectId));
 }
@@ -39,28 +35,30 @@ stepRoutes.post("/projects/:projectId/steps", async (c) => {
   return c.json(await createStep(projectId, result.value), 201);
 });
 
-stepRoutes.post(
-  "/steps/:stepId/images",
-  bodyLimit({
-    maxSize: MAX_UPLOAD_REQUEST_BYTES,
-    onError: (c) => c.json({ error: "Uppladdningen är för stor" }, 413),
-  }),
-  async (c) => {
-    const stepId = c.req.param("stepId");
-    if (!isUuid(stepId) || !(await stepExists(stepId))) return c.json(stepNotFound, 404);
+stepRoutes.patch("/steps/:stepId", async (c) => {
+  const stepId = c.req.param("stepId");
+  const existing = isUuid(stepId) ? await getStep(stepId) : undefined;
+  if (!existing) return c.json(stepNotFound, 404);
 
-    const body = await c.req.parseBody({ all: true }).catch(() => ({}));
-    const field = "images" in body ? body.images : [];
-    const result = validateImages(Array.isArray(field) ? field : [field]);
-    if (!result.ok) return c.json({ error: result.error }, 400);
+  const body: unknown = await c.req.json().catch(() => undefined);
+  if (!isObject(body)) return c.json({ error: "Body måste vara ett JSON-objekt" }, 400);
 
-    const savedFiles = await Promise.all(result.value.map((file) => saveImageFile(file)));
-    try {
-      return c.json(await addStepImages(stepId, savedFiles), 201);
-    } catch (error) {
-      // Don't leave files on disk that no step points to
-      await deleteImageFiles(savedFiles.map((file) => file.fileName));
-      throw error;
-    }
-  },
-);
+  // Fields left out keep their current value, then everything is checked like a new step
+  const { name, description, status, date } = existing;
+  const result = validateNewStep({ name, description, status, date, ...body });
+  if (!result.ok) return c.json({ error: result.error }, 400);
+
+  const step = await updateStep(stepId, result.value);
+  if (!step) return c.json(stepNotFound, 404);
+
+  return c.json(step);
+});
+
+stepRoutes.delete("/steps/:stepId", async (c) => {
+  const stepId = c.req.param("stepId");
+  const imageFiles = isUuid(stepId) ? await deleteStep(stepId) : undefined;
+  if (!imageFiles) return c.json(stepNotFound, 404);
+
+  await deleteImageFiles(imageFiles);
+  return c.body(null, 204);
+});

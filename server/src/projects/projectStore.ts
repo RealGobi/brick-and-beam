@@ -65,3 +65,45 @@ export async function getProject(projectId: string): Promise<Project | undefined
   `;
   return project;
 }
+
+/** Replaces the editable fields of a project. Returns undefined when it does not exist. */
+export async function updateProject(projectId: string, changes: NewProject): Promise<Project | undefined> {
+  const [project] = await sql<Project[]>`
+    update projects
+    set
+      name = ${changes.name},
+      description = ${changes.description},
+      status = ${changes.status},
+      start_date = ${changes.startDate},
+      end_date = ${changes.endDate},
+      budget = ${changes.budget}
+    where id = ${projectId}
+    returning ${projectColumns}
+  `;
+  return project;
+}
+
+/**
+ * Deletes a project. Its steps and image rows go with it (on delete cascade).
+ * Returns the image file names so the caller can remove the files,
+ * or undefined when the project does not exist.
+ */
+export async function deleteProject(projectId: string): Promise<string[] | undefined> {
+  return sql.begin(async (transaction) => {
+    // Lock the project and its steps first: new steps and uploads wait until we're done,
+    // so no new image can be missed
+    const locked = await transaction`select id from projects where id = ${projectId} for update`;
+    if (locked.length === 0) return undefined;
+    await transaction`select id from project_steps where project_id = ${projectId} for update`;
+
+    const images = await transaction<{ fileName: string }[]>`
+      select i.file_name
+      from step_images i
+      join project_steps s on s.id = i.step_id
+      where s.project_id = ${projectId}
+    `;
+    await transaction`delete from projects where id = ${projectId}`;
+
+    return images.map((image) => image.fileName);
+  });
+}
