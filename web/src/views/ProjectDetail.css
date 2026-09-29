@@ -1,0 +1,32 @@
+.project-detail-description {
+  white-space: pre-line;
+}
+
+.project-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+  margin: 8px 0 0;
+}
+
+.project-facts dt {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.project-facts dd {
+  margin: 4px 0 0;
+  color: var(--text-h);
+}
+
+.project-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-steps .section-head {
+  margin-bottom: 4px;
+}

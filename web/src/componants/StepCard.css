@@ -1,0 +1,89 @@
+.step-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 28px;
+}
+
+.step-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.step-card-head h3 {
+  margin: 0;
+  font-size: 19px;
+  color: var(--text-h);
+}
+
+.step-card-date {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.step-card-description {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.step-status {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.step-status-done {
+  background: #e3eee0;
+  color: #3f6b37;
+}
+
+.step-status-ongoing {
+  background: #f6ead7;
+  color: #8a5a1c;
+}
+
+.step-images {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.step-images img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.step-upload {
+  align-self: flex-start;
+}
+
+/* Show keyboard focus on the label, since the real file input is hidden */
+.step-upload:focus-within {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.step-upload.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 760px) {
+  .step-card {
+    padding: 20px;
+  }
+}

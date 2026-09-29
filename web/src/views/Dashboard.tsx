@@ -1,19 +1,11 @@
 import { Link } from 'react-router'
 import { StatCard } from '../componants/StatCard'
+import type { Project, ProjectStatus } from '../api/projects'
+import { useProjects } from '../hooks/useProjects'
 import './Dashboard.css'
 
-type ProjectStatus = 'done' | 'ongoing' | 'planned'
-
-interface Project {
-    id: string
-    name: string
-    status: ProjectStatus
-}
-
-// Ersätts med data från /api/projects när det finns
-const projects: Project[] = []
-
-const countBy = (status: ProjectStatus) => projects.filter((p) => p.status === status).length
+const countBy = (projects: Project[], status: ProjectStatus) =>
+    projects.filter((p) => p.status === status).length
 
 const iconProps = {
     width: 18,
@@ -39,6 +31,7 @@ const LayersIcon = () => (
 )
 
 function Dashboard() {
+    const { projects, loading, error } = useProjects()
 
     return (
         <div className="dashboard">
@@ -51,9 +44,9 @@ function Dashboard() {
             </header>
 
             <section className="stat-grid">
-                <StatCard label="Färdiga" value={countBy('done')} icon={<CheckIcon />} />
-                <StatCard label="Pågående" value={countBy('ongoing')} icon={<HammerIcon />} />
-                <StatCard label="Planerade" value={countBy('planned')} icon={<LayersIcon />} />
+                <StatCard label="Färdiga" value={countBy(projects, 'done')} icon={<CheckIcon />} />
+                <StatCard label="Pågående" value={countBy(projects, 'ongoing')} icon={<HammerIcon />} />
+                <StatCard label="Planerade" value={countBy(projects, 'planned')} icon={<LayersIcon />} />
             </section>
 
             <section>
@@ -61,15 +54,29 @@ function Dashboard() {
                     <h2>Senaste projekten</h2>
                     <Link to="/project" className="see-all">Visa alla →</Link>
                 </div>
-                {projects.length === 0 ? (
-                    <p className="empty">Inga projekt än.</p>
-                ) : (
-                    <ul className="project-list">
-                        {projects.slice(0, 5).map((p) => <li key={p.id}>{p.name}</li>)}
-                    </ul>
-                )}
+                <RecentProjects projects={projects} loading={loading} error={error} />
             </section>
         </div>
+    )
+}
+
+type RecentProjectsProps = {
+    projects: Project[]
+    loading: boolean
+    error: string | null
+}
+
+function RecentProjects({ projects, loading, error }: RecentProjectsProps) {
+    if (loading) return <p className="empty">Hämtar projekt…</p>
+    if (error) return <p className="empty" role="alert">Kunde inte hämta projekten. {error}</p>
+    if (projects.length === 0) return <p className="empty">Inga projekt än.</p>
+
+    return (
+        <ul className="project-list">
+            {projects.slice(0, 5).map((p) => (
+                <li key={p.id}><Link to={`/project/${p.id}`}>{p.name}</Link></li>
+            ))}
+        </ul>
     )
 }
 

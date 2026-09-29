@@ -1,0 +1,91 @@
+export const projectStatuses = ['planned', 'ongoing', 'done'] as const
+
+export type ProjectStatus = (typeof projectStatuses)[number]
+
+/** A project as returned by the API. Timestamps arrive as ISO strings, dates as "YYYY-MM-DD". */
+export type Project = {
+    id: string
+    name: string
+    description: string
+    status: ProjectStatus
+    startDate: string | null
+    endDate: string | null
+    /** Whole kronor */
+    budget: number | null
+    createdAt: string
+    updatedAt: string
+}
+
+/** What the client sends to create a project. */
+export type NewProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
+
+export function isProjectStatus(value: unknown): value is ProjectStatus {
+    return projectStatuses.some((status) => status === value)
+}
+
+const isStringOrNull = (value: unknown) => typeof value === 'string' || value === null
+
+export function isProject(value: unknown): value is Project {
+    if (typeof value !== 'object' || value === null) return false
+
+    const project = value as Record<string, unknown>
+    return (
+        typeof project.id === 'string' &&
+        typeof project.name === 'string' &&
+        typeof project.description === 'string' &&
+        isProjectStatus(project.status) &&
+        isStringOrNull(project.startDate) &&
+        isStringOrNull(project.endDate) &&
+        (typeof project.budget === 'number' || project.budget === null) &&
+        typeof project.createdAt === 'string' &&
+        typeof project.updatedAt === 'string'
+    )
+}
+
+/** Uses the server's error message when there is one, e.g. "name krävs". */
+export async function errorFromResponse(response: Response): Promise<Error> {
+    const body: unknown = await response.json().catch(() => null)
+    if (typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string') {
+        return new Error(body.error)
+    }
+    return new Error(`Servern svarade med ${response.status}`)
+}
+
+/** Fetches all projects, newest first. Throws if the request fails or the data has an unexpected shape. */
+export async function fetchProjects(): Promise<Project[]> {
+    const response = await fetch('/api/projects')
+    if (!response.ok) throw await errorFromResponse(response)
+
+    const body: unknown = await response.json()
+    if (!Array.isArray(body) || !body.every(isProject)) {
+        throw new Error('Oväntat svar från servern')
+    }
+
+    return body
+}
+
+/** Fetches one project. Throws "Projektet finns inte" when the id is unknown. */
+export async function fetchProject(projectId: string): Promise<Project> {
+    const response = await fetch(`/api/projects/${projectId}`)
+    if (!response.ok) throw await errorFromResponse(response)
+
+    const body: unknown = await response.json()
+    if (!isProject(body)) throw new Error('Oväntat svar från servern')
+
+    return body
+}
+
+/** Creates a project and returns it as saved by the server. Throws with the server's message on invalid input. */
+export async function createProject(input: NewProjectInput): Promise<Project> {
+    const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+    })
+    if (!response.ok) throw await errorFromResponse(response)
+
+    const body: unknown = await response.json()
+    if (!isProject(body)) throw new Error('Oväntat svar från servern')
+
+    return body
+}
