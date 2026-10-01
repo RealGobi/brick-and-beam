@@ -28,6 +28,29 @@ describe('ProjectCard', () => {
     })
 })
 
+describe('ProjectCard: cover image', () => {
+    function renderCard(coverImageUrl: string | null) {
+        const { container } = render(
+            <MemoryRouter>
+                <ProjectCard project={makeProject({ coverImageUrl })} />
+            </MemoryRouter>,
+        )
+        return container
+    }
+
+    it('shows the cover image when the project has one', () => {
+        const container = renderCard('/api/uploads/kok.jpg')
+
+        expect(container.querySelector('.project-card-cover img')).toHaveAttribute('src', '/api/uploads/kok.jpg')
+    })
+
+    it('shows only the striped placeholder when the project has no images', () => {
+        const container = renderCard(null)
+
+        expect(container.querySelector('.project-card-cover img')).toBeNull()
+    })
+})
+
 describe('AddProjectCard', () => {
     it('links to the new project form', () => {
         render(

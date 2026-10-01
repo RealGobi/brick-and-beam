@@ -24,6 +24,7 @@ const storedProject: Project = {
   budget: 85000,
   createdAt: new Date("2026-09-01T10:00:00.000Z"),
   updatedAt: new Date("2026-09-02T08:30:00.000Z"),
+  coverImageUrl: "/api/uploads/cover.jpg",
 };
 
 // How storedProject looks in a JSON response

@@ -69,6 +69,13 @@ describe('fetchProjects', () => {
         await expect(fetchProjects()).rejects.toThrow('Oväntat svar från servern')
     })
 
+    it('accepts a project with a cover image', async () => {
+        const withCover = { ...project, coverImageUrl: '/api/uploads/kok.jpg' }
+        mockFetchResponse([withCover])
+
+        expect(await fetchProjects()).toEqual([withCover])
+    })
+
     it('throws when a project is missing a field', async () => {
         const withoutBudget: Record<string, unknown> = { ...project }
         delete withoutBudget.budget

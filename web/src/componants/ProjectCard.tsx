@@ -3,11 +3,16 @@ import type { Project } from '../api/projects'
 import { formatTimestamp, statusLabels } from '../utils/formatProject'
 import './ProjectCard.css'
 
-/** A project as a card with a cover area, name, creation date and status. The whole card is a link. */
+/**
+ * A project as a card with its newest image (or a striped placeholder), name, creation date and status.
+ * The whole card is a link.
+ */
 export function ProjectCard({ project }: { project: Project }) {
     return (
         <Link to={`/project/${project.id}`} className="project-card">
-            <div className="project-card-cover" aria-hidden="true" />
+            <div className="project-card-cover">
+                {project.coverImageUrl && <img src={project.coverImageUrl} alt="" loading="lazy" />}
+            </div>
             <div className="project-card-body">
                 <div className="project-card-text">
                     <h3>{project.name}</h3>

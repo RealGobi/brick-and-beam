@@ -1,4 +1,5 @@
 import { sql } from "../db";
+import { imageUrl } from "../steps/stepStore";
 
 export type ProjectStatus = "planned" | "ongoing" | "done";
 
@@ -15,27 +16,44 @@ export type Project = {
   budget: number | null;
   createdAt: Date;
   updatedAt: Date;
+  /** The newest image from any of the project's steps, or null when there are no images */
+  coverImageUrl: string | null;
 };
 
 /** The fields a client provides when creating a project. The rest is set by the database. */
-export type NewProject = Omit<Project, "id" | "createdAt" | "updatedAt">;
+export type NewProject = Omit<Project, "id" | "createdAt" | "updatedAt" | "coverImageUrl">;
+
+type ProjectRow = Omit<Project, "coverImageUrl"> & { coverFileName: string | null };
 
 const projectColumns = sql`
-  id, name, description, status, start_date, end_date, budget, created_at, updated_at
+  id, name, description, status, start_date, end_date, budget, created_at, updated_at,
+  (
+    select i.file_name
+    from step_images i
+    join project_steps s on s.id = i.step_id
+    where s.project_id = projects.id
+    order by i.created_at desc
+    limit 1
+  ) as cover_file_name
 `;
+
+function toProject({ coverFileName, ...project }: ProjectRow): Project {
+  return { ...project, coverImageUrl: coverFileName ? imageUrl(coverFileName) : null };
+}
 
 /** Returns all projects, newest first. */
 export async function listProjects(): Promise<Project[]> {
-  return sql<Project[]>`
+  const rows = await sql<ProjectRow[]>`
     select ${projectColumns}
     from projects
     order by created_at desc
   `;
+  return rows.map(toProject);
 }
 
 /** Saves a new project and returns it as stored. */
 export async function createProject(newProject: NewProject): Promise<Project> {
-  const [project] = await sql<Project[]>`
+  const [row] = await sql<ProjectRow[]>`
     insert into projects (name, description, status, start_date, end_date, budget)
     values (
       ${newProject.name},
@@ -47,7 +65,7 @@ export async function createProject(newProject: NewProject): Promise<Project> {
     )
     returning ${projectColumns}
   `;
-  return project;
+  return toProject(row);
 }
 
 /** True when a project with this id exists. */
@@ -58,17 +76,17 @@ export async function projectExists(projectId: string): Promise<boolean> {
 
 /** Returns one project, or undefined when it does not exist. */
 export async function getProject(projectId: string): Promise<Project | undefined> {
-  const [project] = await sql<Project[]>`
+  const [row] = await sql<ProjectRow[]>`
     select ${projectColumns}
     from projects
     where id = ${projectId}
   `;
-  return project;
+  return row && toProject(row);
 }
 
 /** Replaces the editable fields of a project. Returns undefined when it does not exist. */
 export async function updateProject(projectId: string, changes: NewProject): Promise<Project | undefined> {
-  const [project] = await sql<Project[]>`
+  const [row] = await sql<ProjectRow[]>`
     update projects
     set
       name = ${changes.name},
@@ -80,7 +98,7 @@ export async function updateProject(projectId: string, changes: NewProject): Pro
     where id = ${projectId}
     returning ${projectColumns}
   `;
-  return project;
+  return row && toProject(row);
 }
 
 /**
