@@ -1,48 +1,16 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { Step } from '../api/steps'
-import { makeProject } from '../test/makeProject'
 import { makeStep } from '../test/makeStep'
-import ProjectDetail from './ProjectDetail'
+import { json, makeExpense, mockServer, renderPage } from '../test/projectDetailPage'
 
-const project = makeProject({
-    id: 'p1',
-    name: 'Nytt badrum',
-    description: 'Hela badrummet',
-    status: 'ongoing',
-    startDate: '2026-09-01',
-    budget: 85000,
-})
-
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
-
-/** Answers the project request and the steps request, like the real server. */
-function mockServer(steps: Step[]) {
-    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
-        return String(url).endsWith('/steps') ? json(steps) : json(project)
-    })
-}
-
-function renderPage() {
-    render(
-        <MemoryRouter initialEntries={['/project/p1']}>
-            <Routes>
-                <Route path="/project/:projectId" element={<ProjectDetail />} />
-                <Route path="/project" element={<p>Projektlistan</p>} />
-            </Routes>
-        </MemoryRouter>,
-    )
-    return userEvent.setup()
-}
+// Changing things on the page is tested in ProjectDetail.editing.test.tsx
 
 afterEach(() => {
     vi.restoreAllMocks()
 })
 
 describe('ProjectDetail', () => {
-    it('loads the project from the id in the address', async () => {
+    it('loads the project, its steps and its expenses from the id in the address', async () => {
         const fetchMock = mockServer([])
 
         renderPage()
@@ -50,6 +18,7 @@ describe('ProjectDetail', () => {
         expect(await screen.findByRole('heading', { name: 'Nytt badrum' })).toBeInTheDocument()
         expect(fetchMock).toHaveBeenCalledWith('/api/projects/p1')
         expect(fetchMock).toHaveBeenCalledWith('/api/projects/p1/steps')
+        expect(fetchMock).toHaveBeenCalledWith('/api/projects/p1/expenses')
     })
 
     it('shows the project details', async () => {
@@ -60,7 +29,8 @@ describe('ProjectDetail', () => {
         expect(await screen.findByText('Hela badrummet')).toBeInTheDocument()
         expect(screen.getByText('Pågående')).toBeInTheDocument()
         expect(screen.getByText('Från 1 sep. 2026')).toBeInTheDocument()
-        expect(screen.getByText(/85\s000\skr/)).toBeInTheDocument()
+        const budgetFact = within(screen.getByText('Budget').parentElement!)
+        expect(budgetFact.getByText(/85\s000\skr/)).toBeInTheDocument()
     })
 
     it('shows the steps of the project', async () => {
@@ -86,113 +56,9 @@ describe('ProjectDetail', () => {
 
         renderPage()
 
-        expect(await screen.findByRole('alert')).toHaveTextContent('Projektet finns inte')
+        const alerts = await screen.findAllByRole('alert')
+        expect(alerts[0]).toHaveTextContent('Projektet finns inte')
         expect(screen.getByRole('link', { name: '← Alla projekt' })).toHaveAttribute('href', '/project')
-    })
-
-    it('places a new step in date order and closes the form', async () => {
-        const fetchMock = mockServer([
-            makeStep({ name: 'Riva kakel', date: '2026-09-01' }),
-            makeStep({ name: 'Ny dusch', date: '2026-09-20' }),
-        ])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Riva kakel' })
-        fetchMock.mockResolvedValueOnce(json(makeStep({ name: 'Nya rör', date: '2026-09-10' }), 201))
-
-        await user.click(screen.getByRole('button', { name: 'Nytt steg' }))
-        await user.type(screen.getByLabelText('Namn på steget'), 'Nya rör')
-        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
-
-        await screen.findByRole('heading', { name: 'Nya rör' })
-        const stepNames = screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
-        expect(stepNames).toEqual(['Riva kakel', 'Nya rör', 'Ny dusch'])
-        expect(screen.queryByLabelText('Namn på steget')).not.toBeInTheDocument()
-    })
-})
-
-describe('ProjectDetail: changing things', () => {
-    it('saves an edited project and shows the new values', async () => {
-        const fetchMock = mockServer([])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Nytt badrum' })
-        fetchMock.mockResolvedValueOnce(json({ ...project, name: 'Badrum uppe' }))
-
-        await user.click(screen.getByRole('button', { name: 'Redigera' }))
-        await user.clear(screen.getByLabelText('Namn'))
-        await user.type(screen.getByLabelText('Namn'), 'Badrum uppe')
-        await user.click(screen.getByRole('button', { name: 'Spara ändringar' }))
-
-        expect(await screen.findByRole('heading', { name: 'Badrum uppe' })).toBeInTheDocument()
-    })
-
-    it('goes back to the project list after deleting the project', async () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
-        const fetchMock = mockServer([])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Nytt badrum' })
-        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
-
-        await user.click(screen.getByRole('button', { name: 'Ta bort projekt' }))
-
-        expect(await screen.findByText('Projektlistan')).toBeInTheDocument()
-        expect(fetchMock).toHaveBeenLastCalledWith('/api/projects/p1', { method: 'DELETE' })
-    })
-
-    it('stays on the page when deleting the project is cancelled', async () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(false)
-        mockServer([])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Nytt badrum' })
-
-        await user.click(screen.getByRole('button', { name: 'Ta bort projekt' }))
-
-        expect(screen.getByRole('heading', { name: 'Nytt badrum' })).toBeInTheDocument()
-    })
-
-    it('updates a step in the list when its status changes', async () => {
-        const fetchMock = mockServer([makeStep({ id: 's1', name: 'Riva kakel', status: 'ongoing' })])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Riva kakel' })
-        fetchMock.mockResolvedValueOnce(json(makeStep({ id: 's1', name: 'Riva kakel', status: 'done' })))
-
-        await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
-
-        expect(await screen.findByRole('button', { name: 'Markera som pågående' })).toBeInTheDocument()
-    })
-
-    it('removes a deleted step from the list', async () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
-        const fetchMock = mockServer([
-            makeStep({ id: 's1', name: 'Riva kakel' }),
-            makeStep({ id: 's2', name: 'Ny dusch' }),
-        ])
-        const user = renderPage()
-        await screen.findByRole('heading', { name: 'Riva kakel' })
-        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
-
-        await user.click(screen.getAllByRole('button', { name: 'Ta bort' })[0])
-
-        await waitFor(() => expect(screen.queryByRole('heading', { name: 'Riva kakel' })).not.toBeInTheDocument())
-        expect(screen.getByRole('heading', { name: 'Ny dusch' })).toBeInTheDocument()
-    })
-})
-
-describe('ProjectDetail: images for a new step', () => {
-    it('shows a warning and the new step when its images could not be uploaded', async () => {
-        const fetchMock = mockServer([])
-        const user = renderPage()
-        await screen.findByText('Inga steg än.')
-        fetchMock
-            .mockResolvedValueOnce(json(makeStep({ id: 's1', name: 'Riva kakel' }), 201))
-            .mockResolvedValueOnce(json({ error: 'Uppladdningen är för stor' }, 413))
-
-        await user.click(screen.getByRole('button', { name: 'Nytt steg' }))
-        await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
-        await user.upload(screen.getByLabelText(/^Bilder/), new File(['jpg'], 'fore.jpg', { type: 'image/jpeg' }))
-        await user.click(screen.getByRole('button', { name: 'Spara steg' }))
-
-        expect(await screen.findByRole('heading', { name: 'Riva kakel' })).toBeInTheDocument()
-        expect(screen.getByRole('alert')).toHaveTextContent('Steget sparades, men bilderna kunde inte laddas upp')
     })
 })
 
@@ -220,5 +86,40 @@ describe('ProjectDetail: progress', () => {
         await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
 
         expect(await screen.findByText('Alla steg klara')).toBeInTheDocument()
+    })
+})
+
+describe('ProjectDetail: expenses', () => {
+    it('shows how much of the budget is spent', async () => {
+        mockServer([], [makeExpense({ amount: 30000 }), makeExpense({ description: 'Rör', amount: 12000 })])
+
+        renderPage()
+
+        // 85 000 kr budget, 42 000 kr spent
+        expect(await screen.findByText(/^43\s000\skr kvar$/)).toBeInTheDocument()
+    })
+
+    it('shows the cost of each step on its card', async () => {
+        mockServer(
+            [makeStep({ id: 's1', name: 'Riva kakel' })],
+            [makeExpense({ stepId: 's1', amount: 2500 }), makeExpense({ description: 'Mer', stepId: 's1', amount: 500 })],
+        )
+
+        renderPage()
+
+        expect(await screen.findByText(/Kostnad 3\s000\skr/)).toBeInTheDocument()
+    })
+
+    it('keeps the expenses of a deleted step, now for the whole project', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+        const fetchMock = mockServer([makeStep({ id: 's1', name: 'Riva kakel' })], [makeExpense({ stepId: 's1' })])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Riva kakel' })
+        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+        await user.click(screen.getByRole('button', { name: 'Ta bort' }))
+
+        expect(await screen.findByText('Övrigt · Hela projektet')).toBeInTheDocument()
+        expect(screen.getByText('Kakel')).toBeInTheDocument()
     })
 })

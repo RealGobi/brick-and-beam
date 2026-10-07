@@ -20,12 +20,14 @@ export type Project = {
   coverImageUrl: string | null;
   stepCount: number;
   doneStepCount: number;
+  /** Sum of all expenses in whole kronor */
+  spentAmount: number;
 };
 
 /** The fields a client provides when creating a project. The rest is set by the database. */
 export type NewProject = Omit<
   Project,
-  "id" | "createdAt" | "updatedAt" | "coverImageUrl" | "stepCount" | "doneStepCount"
+  "id" | "createdAt" | "updatedAt" | "coverImageUrl" | "stepCount" | "doneStepCount" | "spentAmount"
 >;
 
 type ProjectRow = Omit<Project, "coverImageUrl"> & { coverFileName: string | null };
@@ -45,7 +47,9 @@ const projectColumns = sql`
   (
     select count(*)::int from project_steps s
     where s.project_id = projects.id and s.status = 'done'
-  ) as done_step_count
+  ) as done_step_count,
+  -- sum() is null without rows and a bigint otherwise, so default to 0 and cast like the counts
+  (select coalesce(sum(e.amount), 0)::int from expenses e where e.project_id = projects.id) as spent_amount
 `;
 
 function toProject({ coverFileName, ...project }: ProjectRow): Project {

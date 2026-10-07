@@ -19,12 +19,12 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Required, trimmed text. */
-export function validateName(value: unknown): Result<string> {
-  if (typeof value !== "string" || value.trim() === "") return invalid("name krävs");
+/** Required, trimmed text of at most MAX_NAME_LENGTH characters. The field name is used in error messages. */
+export function validateName(value: unknown, field = "name"): Result<string> {
+  if (typeof value !== "string" || value.trim() === "") return invalid(`${field} krävs`);
 
   const name = value.trim();
-  if (name.length > MAX_NAME_LENGTH) return invalid(`name får vara högst ${MAX_NAME_LENGTH} tecken`);
+  if (name.length > MAX_NAME_LENGTH) return invalid(`${field} får vara högst ${MAX_NAME_LENGTH} tecken`);
   return valid(name);
 }
 

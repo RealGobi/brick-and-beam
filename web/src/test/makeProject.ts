@@ -16,6 +16,7 @@ export function makeProject(overrides: Partial<Project> = {}): Project {
         coverImageUrl: null,
         stepCount: 0,
         doneStepCount: 0,
+        spentAmount: 0,
         ...overrides,
     }
 }

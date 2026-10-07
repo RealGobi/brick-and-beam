@@ -27,6 +27,7 @@ const storedProject: Project = {
   coverImageUrl: "/api/uploads/cover.jpg",
   stepCount: 5,
   doneStepCount: 3,
+  spentAmount: 42000,
 };
 
 // How storedProject looks in a JSON response

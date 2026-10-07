@@ -1,19 +1,21 @@
 import { useState } from 'react'
 import { deleteStep, updateStep, type Step, type StepImage } from '../api/steps'
-import { formatDate, stepStatusLabels } from '../utils/formatProject'
+import { formatAmount, formatDate, stepStatusLabels } from '../utils/formatProject'
 import { StepForm } from './StepForm'
 import { StepImages } from './StepImages'
 import './StepCard.css'
 
 type StepCardProps = {
     step: Step
+    /** Sum of the expenses linked to this step, in whole kronor */
+    cost?: number
     onSaved: (step: Step) => void
     onDeleted: (stepId: string) => void
     onImagesChange: (stepId: string, images: StepImage[]) => void
 }
 
 /** One step with its images, and buttons for changing status, editing and deleting it. */
-export function StepCard({ step, onSaved, onDeleted, onImagesChange }: StepCardProps) {
+export function StepCard({ step, cost = 0, onSaved, onDeleted, onImagesChange }: StepCardProps) {
     const [editing, setEditing] = useState(false)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -64,7 +66,10 @@ export function StepCard({ step, onSaved, onDeleted, onImagesChange }: StepCardP
                 <span className={`status-badge status-${step.status}`}>{stepStatusLabels[step.status]}</span>
             </header>
 
-            <p className="step-card-date">{step.date ? formatDate(step.date) : 'Inget datum'}</p>
+            <p className="step-card-date">
+                {step.date ? formatDate(step.date) : 'Inget datum'}
+                {cost > 0 && <> · Kostnad {formatAmount(cost)}</>}
+            </p>
             {step.description && <p className="step-card-description">{step.description}</p>}
 
             <StepImages stepId={step.id} images={step.images} onChange={(images) => onImagesChange(step.id, images)} />

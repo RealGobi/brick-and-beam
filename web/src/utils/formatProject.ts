@@ -1,4 +1,5 @@
 import type { ProjectStatus } from '../api/projects'
+import type { ExpenseCategory } from '../api/expenses'
 import type { StepStatus } from '../api/steps'
 
 export const statusLabels: Record<ProjectStatus, string> = {
@@ -12,6 +13,22 @@ export const stepStatusLabels: Record<StepStatus, string> = {
     done: 'Klar',
 }
 
+export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
+    purchase: 'Inköp',
+    carpenter: 'Snickare',
+    electrician: 'Elektriker',
+    plumber: 'Rörmokare',
+    painter: 'Målare',
+    other: 'Övrigt',
+}
+
+/** What the supplier field means for a category: a store for purchases, otherwise a company. */
+export function supplierLabel(category: ExpenseCategory): string {
+    if (category === 'purchase') return 'Inköpsställe'
+    if (category === 'other') return 'Inköpsställe eller företag'
+    return 'Företag'
+}
+
 const dateFormat = new Intl.DateTimeFormat('sv-SE', {
     day: 'numeric',
     month: 'short',
@@ -20,7 +37,7 @@ const dateFormat = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'UTC',
 })
 
-const budgetFormat = new Intl.NumberFormat('sv-SE', {
+const amountFormat = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
@@ -39,10 +56,15 @@ export function formatPeriod(startDate: string | null, endDate: string | null): 
     return 'Inget datum'
 }
 
-/** 85000 → "85 000 kr" */
+/** 12000 → "12 000 kr" */
+export function formatAmount(amount: number): string {
+    return amountFormat.format(amount)
+}
+
+/** 85000 → "85 000 kr", or "Ingen budget" when it is not set */
 export function formatBudget(budget: number | null): string {
     if (budget === null) return 'Ingen budget'
-    return budgetFormat.format(budget)
+    return formatAmount(budget)
 }
 
 // No fixed time zone: a timestamp should show the day it was in the user's own time

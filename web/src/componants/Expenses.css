@@ -1,0 +1,147 @@
+.expense-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.expense-section .section-head {
+  margin-bottom: 4px;
+}
+
+.budget-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.budget-summary-spent {
+  font-size: 16px;
+}
+
+.budget-summary-spent strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text-h);
+}
+
+.budget-summary-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--planned-bg);
+  overflow: hidden;
+}
+
+.budget-summary-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+  transition: width 0.4s ease;
+}
+
+.budget-summary-note {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.budget-summary.is-over .budget-summary-bar span {
+  background: var(--danger);
+}
+
+.budget-summary.is-over .budget-summary-note {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.expense-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px 14px 26px;
+}
+
+.expense-row + .expense-row {
+  border-top: 1px solid var(--border);
+}
+
+.expense-row-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-row-description {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.expense-row-details {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.expense-row-amount {
+  font-weight: 600;
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.expense-row-edit {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green-800);
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.expense-row-edit:hover {
+  background: var(--active-bg);
+  text-decoration: underline;
+}
+
+/* The edit form takes the row's place in the list */
+.expense-row-editing {
+  padding: 10px;
+}
+
+.expense-row-editing + .expense-row,
+.expense-row + .expense-row-editing {
+  border-top: 1px solid var(--border);
+}
+
+.expense-row-delete {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  cursor: pointer;
+}
+
+.expense-row-delete:hover {
+  color: #fff;
+  background: var(--danger);
+}

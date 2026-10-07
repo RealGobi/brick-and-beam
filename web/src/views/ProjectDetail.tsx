@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { deleteProject, type Project } from '../api/projects'
 import type { Step } from '../api/steps'
+import { ExpenseSection } from '../componants/ExpenseSection'
 import { ProjectForm } from '../componants/ProjectForm'
 import { StepCard } from '../componants/StepCard'
 import { StepForm } from '../componants/StepForm'
 import { StepProgress } from '../componants/StepProgress'
+import { useExpenses } from '../hooks/useExpenses'
 import { useProjectDetails } from '../hooks/useProjectDetails'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
 import './Dashboard.css'
@@ -23,6 +25,7 @@ function ProjectDetail() {
 function ProjectPage({ projectId }: { projectId: string }) {
     const { project, steps, loading, error, setProject, saveStep, removeStep, setStepImages } =
         useProjectDetails(projectId)
+    const expenses = useExpenses(projectId)
     const [showStepForm, setShowStepForm] = useState(false)
     const [uploadWarning, setUploadWarning] = useState<string | null>(null)
 
@@ -42,8 +45,15 @@ function ProjectPage({ projectId }: { projectId: string }) {
         setUploadWarning(warning ?? null)
     }
 
-    // Counted from the steps on the page, so it follows status changes right away
+    function handleStepDeleted(stepId: string) {
+        removeStep(stepId)
+        expenses.unlinkStep(stepId)
+    }
+
+    // Counted from what is on the page, so it follows changes right away
     const doneStepCount = steps.filter((step) => step.status === 'done').length
+    const costOfStep = (stepId: string) =>
+        expenses.expenses.filter((expense) => expense.stepId === stepId).reduce((sum, expense) => sum + expense.amount, 0)
 
     return (
         <div className="dashboard">
@@ -77,11 +87,23 @@ function ProjectPage({ projectId }: { projectId: string }) {
                         key={step.id}
                         step={step}
                         onSaved={saveStep}
-                        onDeleted={removeStep}
+                        cost={costOfStep(step.id)}
+                        onDeleted={handleStepDeleted}
                         onImagesChange={setStepImages}
                     />
                 ))}
             </section>
+
+            <ExpenseSection
+                projectId={project.id}
+                budget={project.budget}
+                steps={steps}
+                expenses={expenses.expenses}
+                loading={expenses.loading}
+                error={expenses.error}
+                onSaved={expenses.saveExpense}
+                onDeleted={expenses.removeExpense}
+            />
         </div>
     )
 }

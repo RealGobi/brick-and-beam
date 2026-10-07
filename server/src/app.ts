@@ -1,5 +1,6 @@
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { expenseRoutes } from "./expenses/expenseRoutes";
 import { imageRoutes } from "./images/imageRoutes";
 import { uploadsDir } from "./images/imageStorage";
 import { projectRoutes } from "./projects/projectRoutes";
@@ -15,6 +16,7 @@ app.get("/api/health", (c) =>
 app.route("/api/projects", projectRoutes);
 app.route("/api", stepRoutes);
 app.route("/api", imageRoutes);
+app.route("/api", expenseRoutes);
 
 // Uploaded images live under /api so the Vite dev proxy forwards them too
 app.use(

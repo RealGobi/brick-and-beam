@@ -18,12 +18,14 @@ export type Project = {
     coverImageUrl: string | null
     stepCount: number
     doneStepCount: number
+    /** Sum of all expenses in whole kronor */
+    spentAmount: number
 }
 
 /** What the client sends to create a project. */
 export type NewProjectInput = Omit<
     Project,
-    'id' | 'createdAt' | 'updatedAt' | 'coverImageUrl' | 'stepCount' | 'doneStepCount'
+    'id' | 'createdAt' | 'updatedAt' | 'coverImageUrl' | 'stepCount' | 'doneStepCount' | 'spentAmount'
 >
 
 export function isProjectStatus(value: unknown): value is ProjectStatus {
@@ -48,7 +50,8 @@ export function isProject(value: unknown): value is Project {
         typeof project.updatedAt === 'string' &&
         isStringOrNull(project.coverImageUrl) &&
         typeof project.stepCount === 'number' &&
-        typeof project.doneStepCount === 'number'
+        typeof project.doneStepCount === 'number' &&
+        typeof project.spentAmount === 'number'
     )
 }
 
