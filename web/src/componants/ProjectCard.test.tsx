@@ -51,6 +51,18 @@ describe('ProjectCard: cover image', () => {
     })
 })
 
+describe('ProjectCard: progress', () => {
+    it('shows how many of the project steps are done', () => {
+        render(
+            <MemoryRouter>
+                <ProjectCard project={makeProject({ stepCount: 5, doneStepCount: 3 })} />
+            </MemoryRouter>,
+        )
+
+        expect(screen.getByText('3 av 5 steg klara')).toBeInTheDocument()
+    })
+})
+
 describe('AddProjectCard', () => {
     it('links to the new project form', () => {
         render(

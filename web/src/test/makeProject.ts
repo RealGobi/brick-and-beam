@@ -14,6 +14,8 @@ export function makeProject(overrides: Partial<Project> = {}): Project {
         createdAt: '2026-09-01T12:00:00.000Z',
         updatedAt: '2026-09-01T12:00:00.000Z',
         coverImageUrl: null,
+        stepCount: 0,
+        doneStepCount: 0,
         ...overrides,
     }
 }

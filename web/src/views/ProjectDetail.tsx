@@ -5,6 +5,7 @@ import type { Step } from '../api/steps'
 import { ProjectForm } from '../componants/ProjectForm'
 import { StepCard } from '../componants/StepCard'
 import { StepForm } from '../componants/StepForm'
+import { StepProgress } from '../componants/StepProgress'
 import { useProjectDetails } from '../hooks/useProjectDetails'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
 import './Dashboard.css'
@@ -41,9 +42,14 @@ function ProjectPage({ projectId }: { projectId: string }) {
         setUploadWarning(warning ?? null)
     }
 
+    // Counted from the steps on the page, so it follows status changes right away
+    const doneStepCount = steps.filter((step) => step.status === 'done').length
+
     return (
         <div className="dashboard">
             <ProjectHeader project={project} onSaved={setProject} />
+
+            <StepProgress done={doneStepCount} total={steps.length} />
 
             <section className="project-steps">
                 <div className="section-head">

@@ -195,3 +195,30 @@ describe('ProjectDetail: images for a new step', () => {
         expect(screen.getByRole('alert')).toHaveTextContent('Steget sparades, men bilderna kunde inte laddas upp')
     })
 })
+
+describe('ProjectDetail: progress', () => {
+    it('shows how many steps are done', async () => {
+        mockServer([
+            makeStep({ id: 's1', name: 'Riva kakel', status: 'done' }),
+            makeStep({ id: 's2', name: 'Ny dusch', status: 'ongoing' }),
+        ])
+
+        renderPage()
+
+        expect(await screen.findByText('1 av 2 steg klara')).toBeInTheDocument()
+    })
+
+    it('updates the progress right away when a step is marked as done', async () => {
+        const fetchMock = mockServer([
+            makeStep({ id: 's1', name: 'Riva kakel', status: 'done' }),
+            makeStep({ id: 's2', name: 'Ny dusch', status: 'ongoing' }),
+        ])
+        const user = renderPage()
+        await screen.findByText('1 av 2 steg klara')
+        fetchMock.mockResolvedValueOnce(json(makeStep({ id: 's2', name: 'Ny dusch', status: 'done' })))
+
+        await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
+
+        expect(await screen.findByText('Alla steg klara')).toBeInTheDocument()
+    })
+})

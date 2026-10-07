@@ -1,10 +1,12 @@
 import { Link } from 'react-router'
 import type { Project } from '../api/projects'
 import { formatTimestamp, statusLabels } from '../utils/formatProject'
+import { StepProgress } from './StepProgress'
 import './ProjectCard.css'
 
 /**
- * A project as a card with its newest image (or a striped placeholder), name, creation date and status.
+ * A project as a card with its newest image (or a striped placeholder), name, creation date, status
+ * and how many steps are done.
  * The whole card is a link.
  */
 export function ProjectCard({ project }: { project: Project }) {
@@ -19,6 +21,9 @@ export function ProjectCard({ project }: { project: Project }) {
                     <time dateTime={project.createdAt}>{formatTimestamp(project.createdAt)}</time>
                 </div>
                 <span className={`status-badge status-${project.status}`}>{statusLabels[project.status]}</span>
+            </div>
+            <div className="project-card-progress">
+                <StepProgress done={project.doneStepCount} total={project.stepCount} />
             </div>
         </Link>
     )

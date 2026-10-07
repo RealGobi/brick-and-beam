@@ -76,6 +76,14 @@ describe('fetchProjects', () => {
         expect(await fetchProjects()).toEqual([withCover])
     })
 
+    it('throws when the step counts are missing', async () => {
+        const withoutCounts: Record<string, unknown> = { ...project }
+        delete withoutCounts.stepCount
+        mockFetchResponse([withoutCounts])
+
+        await expect(fetchProjects()).rejects.toThrow('Oväntat svar från servern')
+    })
+
     it('throws when a project is missing a field', async () => {
         const withoutBudget: Record<string, unknown> = { ...project }
         delete withoutBudget.budget

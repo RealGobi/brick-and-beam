@@ -16,10 +16,15 @@ export type Project = {
     updatedAt: string
     /** The newest image from the project's steps, or null when there are none */
     coverImageUrl: string | null
+    stepCount: number
+    doneStepCount: number
 }
 
 /** What the client sends to create a project. */
-export type NewProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'coverImageUrl'>
+export type NewProjectInput = Omit<
+    Project,
+    'id' | 'createdAt' | 'updatedAt' | 'coverImageUrl' | 'stepCount' | 'doneStepCount'
+>
 
 export function isProjectStatus(value: unknown): value is ProjectStatus {
     return projectStatuses.some((status) => status === value)
@@ -41,7 +46,9 @@ export function isProject(value: unknown): value is Project {
         (typeof project.budget === 'number' || project.budget === null) &&
         typeof project.createdAt === 'string' &&
         typeof project.updatedAt === 'string' &&
-        isStringOrNull(project.coverImageUrl)
+        isStringOrNull(project.coverImageUrl) &&
+        typeof project.stepCount === 'number' &&
+        typeof project.doneStepCount === 'number'
     )
 }
 

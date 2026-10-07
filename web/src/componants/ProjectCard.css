@@ -54,6 +54,11 @@
   padding: 14px 16px 16px;
 }
 
+.project-card-progress {
+  margin-top: auto;
+  padding: 0 16px 16px;
+}
+
 .project-card-text {
   display: flex;
   flex-direction: column;

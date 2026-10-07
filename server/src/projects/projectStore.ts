@@ -18,10 +18,15 @@ export type Project = {
   updatedAt: Date;
   /** The newest image from any of the project's steps, or null when there are no images */
   coverImageUrl: string | null;
+  stepCount: number;
+  doneStepCount: number;
 };
 
 /** The fields a client provides when creating a project. The rest is set by the database. */
-export type NewProject = Omit<Project, "id" | "createdAt" | "updatedAt" | "coverImageUrl">;
+export type NewProject = Omit<
+  Project,
+  "id" | "createdAt" | "updatedAt" | "coverImageUrl" | "stepCount" | "doneStepCount"
+>;
 
 type ProjectRow = Omit<Project, "coverImageUrl"> & { coverFileName: string | null };
 
@@ -34,7 +39,13 @@ const projectColumns = sql`
     where s.project_id = projects.id
     order by i.created_at desc
     limit 1
-  ) as cover_file_name
+  ) as cover_file_name,
+  -- count(*) is a bigint, which postgres.js returns as a string, so cast to int
+  (select count(*)::int from project_steps s where s.project_id = projects.id) as step_count,
+  (
+    select count(*)::int from project_steps s
+    where s.project_id = projects.id and s.status = 'done'
+  ) as done_step_count
 `;
 
 function toProject({ coverFileName, ...project }: ProjectRow): Project {

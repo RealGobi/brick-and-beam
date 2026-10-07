@@ -25,6 +25,8 @@ const storedProject: Project = {
   createdAt: new Date("2026-09-01T10:00:00.000Z"),
   updatedAt: new Date("2026-09-02T08:30:00.000Z"),
   coverImageUrl: "/api/uploads/cover.jpg",
+  stepCount: 5,
+  doneStepCount: 3,
 };
 
 // How storedProject looks in a JSON response
