@@ -1,3 +1,4 @@
+import { formatStepProgress } from '../utils/formatProject'
 import './StepProgress.css'
 
 type StepProgressProps = {
@@ -5,16 +6,10 @@ type StepProgressProps = {
     total: number
 }
 
-function progressText(done: number, total: number): string {
-    if (total === 0) return 'Inga steg än'
-    if (done === total) return 'Alla steg klara'
-    return `${done} av ${total} steg klara`
-}
-
 /** How many of a project's steps are done, as text and a bar. */
 export function StepProgress({ done, total }: StepProgressProps) {
     const percent = total === 0 ? 0 : Math.round((done / total) * 100)
-    const text = progressText(done, total)
+    const text = formatStepProgress(done, total)
 
     return (
         <div className="step-progress">

@@ -8,7 +8,13 @@ function errorFor(body: unknown) {
 
 describe("validateNewStep", () => {
   it("accepts a step with every field set", () => {
-    const input = { name: "Riva kakel", description: "Hela väggen", status: "done", date: "2026-09-05" };
+    const input = {
+      name: "Riva kakel",
+      description: "Hela väggen",
+      status: "done",
+      priority: "milestone",
+      date: "2026-09-05",
+    };
 
     expect(validateNewStep(input)).toEqual({ ok: true, value: input });
   });
@@ -16,7 +22,7 @@ describe("validateNewStep", () => {
   it("fills in defaults when only a name is given", () => {
     expect(validateNewStep({ name: "Ny dusch" })).toEqual({
       ok: true,
-      value: { name: "Ny dusch", description: "", status: "ongoing", date: null },
+      value: { name: "Ny dusch", description: "", status: "ongoing", priority: "normal", date: null },
     });
   });
 
@@ -32,6 +38,13 @@ describe("validateNewStep", () => {
 
   it("only allows the step statuses ongoing and done", () => {
     expect(errorFor({ name: "Måla", status: "planned" })).toBe("status måste vara ongoing eller done");
+  });
+
+  it("accepts each priority and rejects an unknown one", () => {
+    for (const priority of ["milestone", "normal", "small"]) {
+      expect(errorFor({ name: "Måla", priority })).toBeUndefined();
+    }
+    expect(errorFor({ name: "Måla", priority: "huge" })).toBe("priority måste vara milestone, normal eller small");
   });
 
   it("rejects a date that does not exist", () => {

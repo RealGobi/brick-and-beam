@@ -27,6 +27,7 @@ describe('StepForm: new step', () => {
         await user.type(screen.getByLabelText('Namn på steget'), 'Riva kakel')
         await user.type(screen.getByLabelText('Beskrivning'), 'Hela väggen')
         await user.selectOptions(screen.getByLabelText('Status'), 'Klar')
+        await user.selectOptions(screen.getByLabelText('Nivå'), 'Milstolpe')
         await user.type(screen.getByLabelText('Datum'), '2026-09-05')
         await user.click(screen.getByRole('button', { name: 'Spara steg' }))
 
@@ -36,18 +37,19 @@ describe('StepForm: new step', () => {
             name: 'Riva kakel',
             description: 'Hela väggen',
             status: 'done',
+            priority: 'milestone',
             date: '2026-09-05',
         })
     })
 
-    it('starts as ongoing without a date', async () => {
+    it('starts as ongoing and normal without a date', async () => {
         const fetchMock = mockServerResponse(makeStep(), 201)
         const { user } = renderForm()
 
         await user.type(screen.getByLabelText('Namn på steget'), 'Måla')
         await user.click(screen.getByRole('button', { name: 'Spara steg' }))
 
-        expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({ status: 'ongoing', date: null })
+        expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({ status: 'ongoing', priority: 'normal', date: null })
     })
 
     it('passes the saved step to onSaved', async () => {
@@ -82,7 +84,14 @@ describe('StepForm: new step', () => {
 })
 
 describe('StepForm: editing', () => {
-    const existing = makeStep({ id: 's1', name: 'Riva kakel', description: 'Hela väggen', status: 'done', date: '2026-09-05' })
+    const existing = makeStep({
+        id: 's1',
+        name: 'Riva kakel',
+        description: 'Hela väggen',
+        status: 'done',
+        priority: 'small',
+        date: '2026-09-05',
+    })
 
     function renderEditForm() {
         const onSaved = vi.fn()
@@ -96,6 +105,7 @@ describe('StepForm: editing', () => {
         expect(screen.getByLabelText('Namn på steget')).toHaveValue('Riva kakel')
         expect(screen.getByLabelText('Beskrivning')).toHaveValue('Hela väggen')
         expect(screen.getByLabelText('Status')).toHaveValue('done')
+        expect(screen.getByLabelText('Nivå')).toHaveValue('small')
         expect(screen.getByLabelText('Datum')).toHaveValue('2026-09-05')
     })
 

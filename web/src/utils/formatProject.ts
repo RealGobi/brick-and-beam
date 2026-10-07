@@ -1,6 +1,6 @@
 import type { ProjectStatus } from '../api/projects'
 import type { ExpenseCategory } from '../api/expenses'
-import type { StepStatus } from '../api/steps'
+import type { StepPriority, StepStatus } from '../api/steps'
 
 export const statusLabels: Record<ProjectStatus, string> = {
     planned: 'Planerad',
@@ -11,6 +11,19 @@ export const statusLabels: Record<ProjectStatus, string> = {
 export const stepStatusLabels: Record<StepStatus, string> = {
     ongoing: 'Pågående',
     done: 'Klar',
+}
+
+export const stepPriorityLabels: Record<StepPriority, string> = {
+    milestone: 'Milstolpe',
+    normal: 'Normal',
+    small: 'Liten',
+}
+
+/** "3 av 5 steg klara", or a short text when there are no steps or all are done */
+export function formatStepProgress(done: number, total: number): string {
+    if (total === 0) return 'Inga steg än'
+    if (done === total) return 'Alla steg klara'
+    return `${done} av ${total} steg klara`
 }
 
 export const expenseCategoryLabels: Record<ExpenseCategory, string> = {

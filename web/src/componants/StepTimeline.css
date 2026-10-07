@@ -1,0 +1,143 @@
+.step-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-timeline-progress {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Equal columns per step; scrolls sideways when the steps don't fit, e.g. on a phone */
+.step-timeline-list {
+  --dot-row: 24px;
+
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 8px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(104px, 1fr);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.step-timeline-item {
+  position: relative;
+}
+
+/*
+ * The line runs through the middle of the dot row: a grey base line (::before) and a green
+ * line on top (::after) up to the last done step. The first and last item draw only half,
+ * so the line starts and ends at a dot.
+ */
+.step-timeline-item::before,
+.step-timeline-item.is-reached::after {
+  content: '';
+  position: absolute;
+  top: calc(4px + var(--dot-row) / 2 - 1.5px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--border);
+}
+
+.step-timeline-item.is-reached::after {
+  background: var(--done);
+}
+
+.step-timeline-item:first-child::before,
+.step-timeline-item:first-child::after {
+  left: 50%;
+}
+
+.step-timeline-item:last-child::before,
+.step-timeline-item:last-child::after,
+.step-timeline-item.is-reached:has(+ .step-timeline-item:not(.is-reached))::after {
+  right: 50%;
+}
+
+.step-timeline-item:only-child::before {
+  display: none;
+}
+
+.step-timeline-button {
+  position: relative;
+  /* Above the lines, which are drawn by the list item */
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.step-timeline-button:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+.step-timeline-button:hover .step-timeline-name {
+  color: var(--green-600);
+  text-decoration: underline;
+}
+
+.step-timeline-dot {
+  display: block;
+  /* Each dot sits centered in a row of the same height, so the line meets every dot in the middle */
+  margin: calc((var(--dot-row) - var(--size)) / 2) 0;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--bg);
+  transition: transform 0.15s;
+}
+
+.step-timeline-button:hover .step-timeline-dot {
+  transform: scale(1.2);
+}
+
+.step-timeline-dot.is-milestone {
+  --size: 22px;
+}
+
+.step-timeline-dot.is-normal {
+  --size: 14px;
+}
+
+.step-timeline-dot.is-small {
+  --size: 9px;
+}
+
+.step-timeline-dot.is-done {
+  background: var(--done);
+}
+
+.step-timeline-dot.is-ongoing {
+  background: var(--surface);
+  border: 2.5px solid var(--ongoing);
+}
+
+.step-timeline-name {
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-timeline-date {
+  margin-top: -6px;
+  font-size: 12px;
+  color: var(--muted);
+}

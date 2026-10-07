@@ -38,6 +38,7 @@ const stepIn = (inProject: string): Step => ({
   name: "Kakel",
   description: "",
   status: "ongoing",
+  priority: "normal",
   date: null,
   createdAt: new Date(),
   updatedAt: new Date(),

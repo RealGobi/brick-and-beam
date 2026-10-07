@@ -18,6 +18,7 @@ const step: Step = {
   name: "Riva kakel",
   description: "Hela väggen",
   status: "ongoing",
+  priority: "milestone",
   date: "2026-09-05",
   createdAt: new Date("2026-09-05T10:00:00.000Z"),
   updatedAt: new Date("2026-09-05T10:00:00.000Z"),
@@ -81,7 +82,13 @@ describe("POST /api/projects/:projectId/steps", () => {
   it("saves the validated input for the right project", async () => {
     await postStep(JSON.stringify({ name: " Måla ", status: "done" }));
 
-    expect(createStep).toHaveBeenCalledWith(projectId, { name: "Måla", description: "", status: "done", date: null });
+    expect(createStep).toHaveBeenCalledWith(projectId, {
+      name: "Måla",
+      description: "",
+      status: "done",
+      priority: "normal",
+      date: null,
+    });
   });
 
   it("returns 400 with the reason when the input is invalid", async () => {
@@ -115,6 +122,7 @@ describe("PATCH /api/steps/:stepId", () => {
       name: "Riva kakel",
       description: "Hela väggen",
       status: "done",
+      priority: "milestone",
       date: "2026-09-05",
     });
   });
@@ -132,6 +140,7 @@ describe("PATCH /api/steps/:stepId", () => {
       name: "Måla",
       description: "Hela väggen",
       status: "ongoing",
+      priority: "milestone",
       date: "2026-09-05",
     });
   });

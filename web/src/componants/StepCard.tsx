@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { deleteStep, updateStep, type Step, type StepImage } from '../api/steps'
 import { formatAmount, formatDate, stepStatusLabels } from '../utils/formatProject'
+import { stepElementId } from '../utils/stepElementId'
 import { StepForm } from './StepForm'
 import { StepImages } from './StepImages'
 import './StepCard.css'
@@ -9,13 +10,15 @@ type StepCardProps = {
     step: Step
     /** Sum of the expenses linked to this step, in whole kronor */
     cost?: number
+    /** Briefly marks the card, e.g. after jumping to it from the timeline */
+    highlighted?: boolean
     onSaved: (step: Step) => void
     onDeleted: (stepId: string) => void
     onImagesChange: (stepId: string, images: StepImage[]) => void
 }
 
 /** One step with its images, and buttons for changing status, editing and deleting it. */
-export function StepCard({ step, cost = 0, onSaved, onDeleted, onImagesChange }: StepCardProps) {
+export function StepCard({ step, cost = 0, highlighted = false, onSaved, onDeleted, onImagesChange }: StepCardProps) {
     const [editing, setEditing] = useState(false)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -60,9 +63,15 @@ export function StepCard({ step, cost = 0, onSaved, onDeleted, onImagesChange }:
     }
 
     return (
-        <article className={`step-card step-card-${step.status}`}>
+        <article
+            id={stepElementId(step.id)}
+            className={`step-card step-card-${step.status}${highlighted ? ' is-highlighted' : ''}`}
+        >
             <header className="step-card-head">
-                <h3>{step.name}</h3>
+                <h3>
+                    {step.name}
+                    {step.priority === 'milestone' && <span className="step-milestone">Milstolpe</span>}
+                </h3>
                 <span className={`status-badge status-${step.status}`}>{stepStatusLabels[step.status]}</span>
             </header>
 

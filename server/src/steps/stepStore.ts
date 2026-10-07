@@ -2,6 +2,9 @@ import { sql } from "../db";
 
 export type StepStatus = "ongoing" | "done";
 
+/** How important a step is, shown as the size of its dot in the timeline */
+export type StepPriority = "milestone" | "normal" | "small";
+
 export type StepImage = {
   id: string;
   /** Path the browser can load the image from */
@@ -16,6 +19,7 @@ export type Step = {
   name: string;
   description: string;
   status: StepStatus;
+  priority: StepPriority;
   /** "YYYY-MM-DD", or null when not set */
   date: string | null;
   createdAt: Date;
@@ -24,7 +28,7 @@ export type Step = {
 };
 
 /** The fields a client provides when creating a step. */
-export type NewStep = Pick<Step, "name" | "description" | "status" | "date">;
+export type NewStep = Pick<Step, "name" | "description" | "status" | "priority" | "date">;
 
 /** An uploaded file that has been saved to disk and should be linked to a step. */
 export type NewStepImage = {
@@ -46,7 +50,7 @@ const toStepImage = (row: ImageRow): StepImage => ({
 });
 
 const stepColumns = sql`
-  id, project_id, name, description, status, date, created_at, updated_at
+  id, project_id, name, description, status, priority, date, created_at, updated_at
 `;
 
 /** Adds each step's images, oldest first. */
@@ -89,8 +93,15 @@ export async function getStep(stepId: string): Promise<Step | undefined> {
 /** Saves a new step for a project and returns it, without images. */
 export async function createStep(projectId: string, newStep: NewStep): Promise<Step> {
   const [step] = await sql<Omit<Step, "images">[]>`
-    insert into project_steps (project_id, name, description, status, date)
-    values (${projectId}, ${newStep.name}, ${newStep.description}, ${newStep.status}, ${newStep.date})
+    insert into project_steps (project_id, name, description, status, priority, date)
+    values (
+      ${projectId},
+      ${newStep.name},
+      ${newStep.description},
+      ${newStep.status},
+      ${newStep.priority},
+      ${newStep.date}
+    )
     returning ${stepColumns}
   `;
   return { ...step, images: [] };
@@ -100,7 +111,12 @@ export async function createStep(projectId: string, newStep: NewStep): Promise<S
 export async function updateStep(stepId: string, changes: NewStep): Promise<Step | undefined> {
   const steps = await sql<Omit<Step, "images">[]>`
     update project_steps
-    set name = ${changes.name}, description = ${changes.description}, status = ${changes.status}, date = ${changes.date}
+    set
+      name = ${changes.name},
+      description = ${changes.description},
+      status = ${changes.status},
+      priority = ${changes.priority},
+      date = ${changes.date}
     where id = ${stepId}
     returning ${stepColumns}
   `;

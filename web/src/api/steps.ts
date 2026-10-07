@@ -4,6 +4,11 @@ export const stepStatuses = ['ongoing', 'done'] as const
 
 export type StepStatus = (typeof stepStatuses)[number]
 
+export const stepPriorities = ['milestone', 'normal', 'small'] as const
+
+/** How important a step is, shown as the size of its dot in the timeline */
+export type StepPriority = (typeof stepPriorities)[number]
+
 export type StepImage = {
     id: string
     /** Path the browser can load the image from, e.g. "/api/uploads/abc.jpg" */
@@ -19,19 +24,24 @@ export type Step = {
     name: string
     description: string
     status: StepStatus
+    priority: StepPriority
     date: string | null
     createdAt: string
     updatedAt: string
     images: StepImage[]
 }
 
-export type NewStepInput = Pick<Step, 'name' | 'description' | 'status' | 'date'>
+export type NewStepInput = Pick<Step, 'name' | 'description' | 'status' | 'priority' | 'date'>
 
 /** Image types the server accepts, also used for the file picker. */
 export const acceptedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 export function isStepStatus(value: unknown): value is StepStatus {
     return stepStatuses.some((status) => status === value)
+}
+
+export function isStepPriority(value: unknown): value is StepPriority {
+    return stepPriorities.some((priority) => priority === value)
 }
 
 function isStepImage(value: unknown): value is StepImage {
@@ -56,6 +66,7 @@ function isStep(value: unknown): value is Step {
         typeof step.name === 'string' &&
         typeof step.description === 'string' &&
         isStepStatus(step.status) &&
+        isStepPriority(step.priority) &&
         (typeof step.date === 'string' || step.date === null) &&
         typeof step.createdAt === 'string' &&
         typeof step.updatedAt === 'string' &&

@@ -44,8 +44,8 @@ stepRoutes.patch("/steps/:stepId", async (c) => {
   if (!isObject(body)) return c.json({ error: "Body måste vara ett JSON-objekt" }, 400);
 
   // Fields left out keep their current value, then everything is checked like a new step
-  const { name, description, status, date } = existing;
-  const result = validateNewStep({ name, description, status, date, ...body });
+  const { name, description, status, priority, date } = existing;
+  const result = validateNewStep({ name, description, status, priority, date, ...body });
   if (!result.ok) return c.json({ error: result.error }, 400);
 
   const step = await updateStep(stepId, result.value);

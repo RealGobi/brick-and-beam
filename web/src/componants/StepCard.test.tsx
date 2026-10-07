@@ -27,6 +27,24 @@ describe('StepCard', () => {
         expect(screen.getByText('Hela väggen')).toBeInTheDocument()
     })
 
+    it('marks a milestone next to its name', () => {
+        renderCard(makeStep({ name: 'Ny el', priority: 'milestone' }))
+
+        expect(screen.getByRole('heading', { name: 'Ny elMilstolpe' })).toBeInTheDocument()
+    })
+
+    it('has no milestone label for normal steps', () => {
+        renderCard(makeStep({ priority: 'normal' }))
+
+        expect(screen.queryByText('Milstolpe')).not.toBeInTheDocument()
+    })
+
+    it('can be found by its id and highlighted, so the timeline can jump to it', () => {
+        render(<StepCard step={makeStep({ id: 's1' })} highlighted onSaved={vi.fn()} onDeleted={vi.fn()} onImagesChange={vi.fn()} />)
+
+        expect(document.getElementById('step-s1')).toHaveClass('is-highlighted')
+    })
+
     it('says there is no date when none is set', () => {
         renderCard(makeStep({ date: null }))
 

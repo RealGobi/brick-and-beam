@@ -2,16 +2,19 @@ import { useState, type FormEvent } from 'react'
 import {
     acceptedImageTypes,
     createStep,
+    isStepPriority,
     isStepStatus,
+    stepPriorities,
     stepStatuses,
     updateStep,
     uploadStepImages,
     type NewStepInput,
     type Step,
+    type StepPriority,
     type StepStatus,
 } from '../api/steps'
 import { checkImageFiles } from '../utils/checkImageFiles'
-import { stepStatusLabels } from '../utils/formatProject'
+import { stepPriorityLabels, stepStatusLabels } from '../utils/formatProject'
 import './Form.css'
 
 type StepFormProps = {
@@ -27,13 +30,20 @@ type FormValues = {
     name: string
     description: string
     status: StepStatus
+    priority: StepPriority
     date: string
 }
 
-const emptyValues: FormValues = { name: '', description: '', status: 'ongoing', date: '' }
+const emptyValues: FormValues = { name: '', description: '', status: 'ongoing', priority: 'normal', date: '' }
 
 function toFormValues(step: Step): FormValues {
-    return { name: step.name, description: step.description, status: step.status, date: step.date ?? '' }
+    return {
+        name: step.name,
+        description: step.description,
+        status: step.status,
+        priority: step.priority,
+        date: step.date ?? '',
+    }
 }
 
 function toStepInput(values: FormValues): NewStepInput {
@@ -41,6 +51,7 @@ function toStepInput(values: FormValues): NewStepInput {
         name: values.name.trim(),
         description: values.description.trim(),
         status: values.status,
+        priority: values.priority,
         date: values.date || null,
     }
 }
@@ -123,6 +134,20 @@ export function StepForm({ projectId, step, onSaved, onCancel }: StepFormProps) 
                     >
                         {stepStatuses.map((status) => (
                             <option key={status} value={status}>{stepStatusLabels[status]}</option>
+                        ))}
+                    </select>
+                </label>
+
+                <label className="field">
+                    <span>Nivå</span>
+                    <select
+                        value={values.priority}
+                        onChange={(e) => {
+                            if (isStepPriority(e.target.value)) update('priority', e.target.value)
+                        }}
+                    >
+                        {stepPriorities.map((priority) => (
+                            <option key={priority} value={priority}>{stepPriorityLabels[priority]}</option>
                         ))}
                     </select>
                 </label>

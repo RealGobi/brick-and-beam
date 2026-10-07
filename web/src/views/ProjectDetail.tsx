@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { deleteProject, type Project } from '../api/projects'
 import type { Step } from '../api/steps'
@@ -6,10 +6,11 @@ import { ExpenseSection } from '../componants/ExpenseSection'
 import { ProjectForm } from '../componants/ProjectForm'
 import { StepCard } from '../componants/StepCard'
 import { StepForm } from '../componants/StepForm'
-import { StepProgress } from '../componants/StepProgress'
+import { StepTimeline } from '../componants/StepTimeline'
 import { useExpenses } from '../hooks/useExpenses'
 import { useProjectDetails } from '../hooks/useProjectDetails'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
+import { stepElementId } from '../utils/stepElementId'
 import './Dashboard.css'
 import './Projects.css'
 import './ProjectDetail.css'
@@ -22,12 +23,31 @@ function ProjectDetail() {
     return <ProjectPage key={projectId} projectId={projectId} />
 }
 
+const HIGHLIGHT_MS = 1600
+
+/** Scrolls to a step card. Jumps without animation for people who asked their system for less motion. */
+function scrollToStep(stepId: string) {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    document.getElementById(stepElementId(stepId))?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+    })
+}
+
 function ProjectPage({ projectId }: { projectId: string }) {
     const { project, steps, loading, error, setProject, saveStep, removeStep, setStepImages } =
         useProjectDetails(projectId)
     const expenses = useExpenses(projectId)
     const [showStepForm, setShowStepForm] = useState(false)
     const [uploadWarning, setUploadWarning] = useState<string | null>(null)
+    const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null)
+
+    // The highlight only marks where the timeline jumped to, so remove it after a moment
+    useEffect(() => {
+        if (highlightedStepId === null) return
+        const timer = setTimeout(() => setHighlightedStepId(null), HIGHLIGHT_MS)
+        return () => clearTimeout(timer)
+    }, [highlightedStepId])
 
     if (loading) return <p className="empty">Hämtar projektet…</p>
     if (error || !project) {
@@ -50,8 +70,12 @@ function ProjectPage({ projectId }: { projectId: string }) {
         expenses.unlinkStep(stepId)
     }
 
+    function handleTimelineSelect(stepId: string) {
+        scrollToStep(stepId)
+        setHighlightedStepId(stepId)
+    }
+
     // Counted from what is on the page, so it follows changes right away
-    const doneStepCount = steps.filter((step) => step.status === 'done').length
     const costOfStep = (stepId: string) =>
         expenses.expenses.filter((expense) => expense.stepId === stepId).reduce((sum, expense) => sum + expense.amount, 0)
 
@@ -59,7 +83,7 @@ function ProjectPage({ projectId }: { projectId: string }) {
         <div className="dashboard">
             <ProjectHeader project={project} onSaved={setProject} />
 
-            <StepProgress done={doneStepCount} total={steps.length} />
+            <StepTimeline steps={steps} onSelect={handleTimelineSelect} />
 
             <section className="project-steps">
                 <div className="section-head">
@@ -88,6 +112,7 @@ function ProjectPage({ projectId }: { projectId: string }) {
                         step={step}
                         onSaved={saveStep}
                         cost={costOfStep(step.id)}
+                        highlighted={step.id === highlightedStepId}
                         onDeleted={handleStepDeleted}
                         onImagesChange={setStepImages}
                     />

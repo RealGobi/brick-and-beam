@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -114,7 +114,7 @@ describe('Projects', () => {
 
         await user.click(screen.getByRole('button', { name: 'Avbryt' }))
 
-        expect(screen.queryByLabelText('Namn')).not.toBeInTheDocument()
+        await waitFor(() => expect(screen.queryByLabelText('Namn')).not.toBeInTheDocument())
     })
 
     it('adds a created project to the top of the list and closes the form', async () => {
@@ -133,6 +133,7 @@ describe('Projects', () => {
         const rows = await screen.findAllByRole('listitem')
         expect(rows[0]).toHaveTextContent('Altan')
         expect(rows[1]).toHaveTextContent('Kök')
-        expect(screen.queryByLabelText('Namn')).not.toBeInTheDocument()
+        // The form closes through a change of the address, which can land a moment after the list updates
+        await waitFor(() => expect(screen.queryByLabelText('Namn')).not.toBeInTheDocument())
     })
 })

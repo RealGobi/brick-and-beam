@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeStep } from '../test/makeStep'
 import { json, makeExpense, mockServer, renderPage } from '../test/projectDetailPage'
 
@@ -86,6 +86,32 @@ describe('ProjectDetail: progress', () => {
         await user.click(screen.getByRole('button', { name: 'Markera som klar' }))
 
         expect(await screen.findByText('Alla steg klara')).toBeInTheDocument()
+    })
+})
+
+describe('ProjectDetail: timeline', () => {
+    // jsdom has no scrollIntoView, so give elements one for these tests and remove it afterwards
+    const scrollIntoView = vi.fn()
+
+    beforeEach(() => {
+        Element.prototype.scrollIntoView = scrollIntoView
+    })
+
+    afterEach(() => {
+        delete (Element.prototype as Partial<Element>).scrollIntoView
+        scrollIntoView.mockReset()
+    })
+
+    it('scrolls to and highlights the step that is clicked in the timeline', async () => {
+        mockServer([makeStep({ id: 's1', name: 'Riva kakel' }), makeStep({ id: 's2', name: 'Ny dusch' })])
+        const user = renderPage()
+        await screen.findByRole('heading', { name: 'Ny dusch' })
+
+        await user.click(screen.getByRole('button', { name: /^Ny dusch, / }))
+
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+        expect(scrollIntoView.mock.contexts[0]).toBe(document.getElementById('step-s2'))
+        expect(document.getElementById('step-s2')).toHaveClass('is-highlighted')
     })
 })
 

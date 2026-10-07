@@ -12,7 +12,7 @@ import {
 
 const step = makeStep({ images: [makeStepImage('a.jpg')] })
 
-const input: NewStepInput = { name: 'Riva kakel', description: '', status: 'ongoing', date: null }
+const input: NewStepInput = { name: 'Riva kakel', description: '', status: 'ongoing', priority: 'normal', date: null }
 
 function mockFetchResponse(body: unknown, status = 200) {
     return vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status }))

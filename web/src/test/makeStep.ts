@@ -9,6 +9,7 @@ export function makeStep(overrides: Partial<Step> = {}): Step {
         name,
         description: '',
         status: 'ongoing',
+        priority: 'normal',
         date: null,
         createdAt: '2026-09-01T12:00:00.000Z',
         updatedAt: '2026-09-01T12:00:00.000Z',
