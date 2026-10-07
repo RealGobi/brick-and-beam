@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { acceptedImageTypes, deleteStepImage, uploadStepImages, type StepImage } from '../api/steps'
+import { ImageViewer } from './ImageViewer'
 import './StepCard.css'
 
 type StepImagesProps = {
@@ -10,10 +11,12 @@ type StepImagesProps = {
 
 const errorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback)
 
-/** The images of a step, with buttons for uploading more and removing one. */
+/** The images of a step, with buttons for viewing them large, uploading more and removing one. */
 export function StepImages({ stepId, images, onChange }: StepImagesProps) {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    // Index of the image shown in the viewer, or null when the viewer is closed
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
     async function handleFilesChosen(event: ChangeEvent<HTMLInputElement>) {
         const input = event.target
@@ -52,11 +55,16 @@ export function StepImages({ stepId, images, onChange }: StepImagesProps) {
         <>
             {images.length > 0 && (
                 <ul className="step-images">
-                    {images.map((image) => (
+                    {images.map((image, index) => (
                         <li key={image.id}>
-                            <a href={image.url} target="_blank" rel="noreferrer">
+                            <button
+                                type="button"
+                                className="step-image-open"
+                                aria-label={`Visa bilden ${image.originalName}`}
+                                onClick={() => setViewerIndex(index)}
+                            >
                                 <img src={image.url} alt={image.originalName} loading="lazy" />
-                            </a>
+                            </button>
                             <button
                                 type="button"
                                 className="step-image-delete"
@@ -69,6 +77,10 @@ export function StepImages({ stepId, images, onChange }: StepImagesProps) {
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {viewerIndex !== null && (
+                <ImageViewer images={images} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
             )}
 
             {error && <p className="form-error" role="alert">{error}</p>}

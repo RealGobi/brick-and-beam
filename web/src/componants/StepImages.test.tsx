@@ -19,11 +19,31 @@ afterEach(() => {
 })
 
 describe('StepImages', () => {
-    it('shows each image as a link to the full size image', () => {
+    it('shows each image as a thumbnail', () => {
         renderImages([makeStepImage('a.jpg'), makeStepImage('b.png')])
 
         expect(screen.getByRole('img', { name: 'a.jpg' })).toHaveAttribute('src', '/api/uploads/a.jpg')
-        expect(screen.getByRole('img', { name: 'b.png' }).closest('a')).toHaveAttribute('href', '/api/uploads/b.png')
+        expect(screen.getByRole('img', { name: 'b.png' })).toHaveAttribute('src', '/api/uploads/b.png')
+    })
+
+    it('opens the clicked image in the viewer and closes it again', async () => {
+        const { user } = renderImages([makeStepImage('a.jpg'), makeStepImage('b.png')])
+
+        await user.click(screen.getByRole('button', { name: 'Visa bilden b.png' }))
+        expect(screen.getByRole('dialog')).toHaveAccessibleName('Bild 2 av 2: b.png')
+
+        await user.keyboard('{Escape}')
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('gives focus back to the thumbnail when the viewer closes', async () => {
+        const { user } = renderImages([makeStepImage('a.jpg')])
+        const thumbnail = screen.getByRole('button', { name: 'Visa bilden a.jpg' })
+
+        await user.click(thumbnail)
+        await user.click(screen.getByRole('button', { name: 'Stäng' }))
+
+        expect(thumbnail).toHaveFocus()
     })
 
     it('adds uploaded images after the existing ones', async () => {
