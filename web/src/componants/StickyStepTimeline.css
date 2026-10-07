@@ -1,0 +1,64 @@
+/* Experiment: sticky, compact step timeline. See StickyStepTimeline.tsx */
+
+.sticky-timeline-sentinel {
+  height: 1px;
+  margin-bottom: -1px;
+}
+
+/* Takes no space in the page, the bar inside hangs below it */
+.sticky-timeline {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 0;
+}
+
+.sticky-timeline-bar {
+  position: absolute;
+  top: 0;
+  left: -12px;
+  right: -12px;
+  padding: 0 12px;
+  border-radius: 0 0 16px 16px;
+  background: rgb(243 239 231 / 94%);
+  box-shadow: 0 8px 20px rgb(31 58 47 / 10%);
+  backdrop-filter: blur(6px);
+  animation: sticky-timeline-in 0.2s ease-out;
+}
+
+@keyframes sticky-timeline-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* Compact: only dots and line, the names show on hover through the button title */
+.step-timeline.is-compact .step-timeline-progress,
+.step-timeline.is-compact .step-timeline-name,
+.step-timeline.is-compact .step-timeline-date {
+  display: none;
+}
+
+.step-timeline.is-compact .step-timeline-list {
+  padding: 6px 0;
+  grid-auto-columns: minmax(36px, 1fr);
+}
+
+/* The step in view gets a ring around its dot */
+.step-timeline-item.is-active .step-timeline-dot {
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 5px var(--green-600);
+}
+
+/* Leave room for the compact bar when jumping to a step */
+.step-card {
+  scroll-margin-top: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-timeline-bar {
+    animation: none;
+  }
+}

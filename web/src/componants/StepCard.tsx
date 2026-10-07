@@ -48,17 +48,21 @@ export function StepCard({ step, cost = 0, highlighted = false, onSaved, onDelet
         }, 'Kunde inte ta bort steget')
     }
 
+    // Same <article> with the same id in both modes, so the page keeps the same element
+    // and anything that tracks it (like the timeline) keeps working after editing
     if (editing) {
         return (
-            <StepForm
-                projectId={step.projectId}
-                step={step}
-                onSaved={(saved) => {
-                    onSaved(saved)
-                    setEditing(false)
-                }}
-                onCancel={() => setEditing(false)}
-            />
+            <article id={stepElementId(step.id)} className="step-card-editing">
+                <StepForm
+                    projectId={step.projectId}
+                    step={step}
+                    onSaved={(saved) => {
+                        onSaved(saved)
+                        setEditing(false)
+                    }}
+                    onCancel={() => setEditing(false)}
+                />
+            </article>
         )
     }
 

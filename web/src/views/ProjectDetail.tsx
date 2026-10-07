@@ -6,7 +6,7 @@ import { ExpenseSection } from '../componants/ExpenseSection'
 import { ProjectForm } from '../componants/ProjectForm'
 import { StepCard } from '../componants/StepCard'
 import { StepForm } from '../componants/StepForm'
-import { StepTimeline } from '../componants/StepTimeline'
+import { StickyStepTimeline } from '../componants/StickyStepTimeline'
 import { useExpenses } from '../hooks/useExpenses'
 import { useProjectDetails } from '../hooks/useProjectDetails'
 import { formatBudget, formatPeriod, statusLabels } from '../utils/formatProject'
@@ -83,41 +83,44 @@ function ProjectPage({ projectId }: { projectId: string }) {
         <div className="dashboard">
             <ProjectHeader project={project} onSaved={setProject} />
 
-            <StepTimeline steps={steps} onSelect={handleTimelineSelect} />
+            {/* Holds the timeline and the steps, so the sticky timeline stops where the steps end */}
+            <div className="steps-area">
+                <StickyStepTimeline steps={steps} onSelect={handleTimelineSelect} />
 
-            <section className="project-steps">
-                <div className="section-head">
-                    <h2>Steg</h2>
-                    {!showStepForm && (
-                        <button type="button" className="button button-primary" onClick={() => setShowStepForm(true)}>
-                            Nytt steg
-                        </button>
+                <section className="project-steps">
+                    <div className="section-head">
+                        <h2>Steg</h2>
+                        {!showStepForm && (
+                            <button type="button" className="button button-primary" onClick={() => setShowStepForm(true)}>
+                                Nytt steg
+                            </button>
+                        )}
+                    </div>
+
+                    {uploadWarning && <p className="form-error" role="alert">{uploadWarning}</p>}
+
+                    {showStepForm && (
+                        <StepForm
+                            projectId={project.id}
+                            onSaved={handleStepCreated}
+                            onCancel={() => setShowStepForm(false)}
+                        />
                     )}
-                </div>
 
-                {uploadWarning && <p className="form-error" role="alert">{uploadWarning}</p>}
-
-                {showStepForm && (
-                    <StepForm
-                        projectId={project.id}
-                        onSaved={handleStepCreated}
-                        onCancel={() => setShowStepForm(false)}
-                    />
-                )}
-
-                {steps.length === 0 && !showStepForm && <p className="empty">Inga steg än.</p>}
-                {steps.map((step) => (
-                    <StepCard
-                        key={step.id}
-                        step={step}
-                        onSaved={saveStep}
-                        cost={costOfStep(step.id)}
-                        highlighted={step.id === highlightedStepId}
-                        onDeleted={handleStepDeleted}
-                        onImagesChange={setStepImages}
-                    />
-                ))}
-            </section>
+                    {steps.length === 0 && !showStepForm && <p className="empty">Inga steg än.</p>}
+                    {steps.map((step) => (
+                        <StepCard
+                            key={step.id}
+                            step={step}
+                            onSaved={saveStep}
+                            cost={costOfStep(step.id)}
+                            highlighted={step.id === highlightedStepId}
+                            onDeleted={handleStepDeleted}
+                            onImagesChange={setStepImages}
+                        />
+                    ))}
+                </section>
+            </div>
 
             <ExpenseSection
                 projectId={project.id}
