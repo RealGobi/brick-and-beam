@@ -62,3 +62,30 @@
     animation: none;
   }
 }
+
+/* Compact and many steps: the whole project fits the width on a computer, smaller dots */
+.step-timeline.is-compact.is-dense .step-timeline-list {
+  --dot-row: 18px;
+
+  grid-auto-columns: minmax(8px, 1fr);
+}
+
+.step-timeline.is-compact.is-dense .step-timeline-button {
+  padding: 4px 0;
+}
+
+.step-timeline.is-compact.is-dense .step-timeline-dot.is-milestone {
+  --size: 14px;
+}
+
+.step-timeline.is-compact.is-dense .step-timeline-dot.is-normal {
+  --size: 8px;
+}
+
+.step-timeline.is-compact.is-dense .step-timeline-dot.is-small {
+  --size: 5px;
+}
+
+.step-timeline.is-compact.is-dense .step-timeline-dot.is-ongoing {
+  border-width: 1.5px;
+}

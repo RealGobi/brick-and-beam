@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBudget, formatDate, formatPeriod, formatTimestamp } from './formatProject'
+import { formatBudget, formatDate, formatMonth, formatPeriod, formatTimestamp } from './formatProject'
 
 describe('formatTimestamp', () => {
     it('shows the day of a timestamp', () => {
@@ -51,5 +51,12 @@ describe('formatBudget', () => {
 
     it('says there is no budget when it is missing', () => {
         expect(formatBudget(null)).toBe('Ingen budget')
+    })
+})
+
+describe('formatMonth', () => {
+    it('shows the short month name, with the year when asked', () => {
+        expect(formatMonth('2026-10-08')).toBe('okt.')
+        expect(formatMonth('2027-01-15', true)).toBe('jan. 2027')
     })
 })

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Step } from '../api/steps'
 import { makeStep } from '../test/makeStep'
 import { StepTimeline } from './StepTimeline'
@@ -83,5 +83,74 @@ describe('StepTimeline', () => {
 
         expect(screen.getByText('Inga steg än')).toBeInTheDocument()
         expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    })
+})
+
+describe('StepTimeline: many steps', () => {
+    // 13 steps from September to November, with milestones at 0, 2 and 12
+    const manySteps = Array.from({ length: 13 }, (_, index) =>
+        makeStep({
+            id: `s${index}`,
+            name: `Steg ${index}`,
+            priority: [0, 2, 12].includes(index) ? 'milestone' : 'normal',
+            date: `2026-${index < 5 ? '09' : index < 10 ? '10' : '11'}-${String(index + 1).padStart(2, '0')}`,
+        }),
+    )
+
+    it('shows names only under milestones', () => {
+        renderTimeline(manySteps)
+
+        expect(screen.getByText('Steg 0')).toBeInTheDocument()
+        expect(screen.getByText('Steg 12')).toBeInTheDocument()
+        expect(screen.queryByText('Steg 5')).not.toBeInTheDocument()
+        // Every step can still be reached and is named for screen readers
+        expect(screen.getAllByRole('button')).toHaveLength(13)
+        expect(screen.getByRole('button', { name: /^Steg 5,/ })).toBeInTheDocument()
+    })
+
+    it('marks each new month above the line, with the year on the first marker', () => {
+        const { container } = renderTimeline(manySteps)
+
+        const months = [...container.querySelectorAll('.step-timeline-month')].map((marker) => marker.textContent)
+        expect(months).toEqual(['sep. 2026', 'okt.', 'nov.'])
+    })
+
+    it('moves the name of a milestone down a row when it is close to the one before', () => {
+        const { container } = renderTimeline(manySteps)
+
+        const items = container.querySelectorAll('.step-timeline-item')
+        expect(items[0]).not.toHaveClass('is-staggered')
+        expect(items[2]).toHaveClass('is-staggered')
+        expect(items[12]).not.toHaveClass('is-staggered')
+    })
+
+    it('keeps names under every dot when there are only a few steps', () => {
+        renderTimeline(manySteps.slice(0, 12))
+
+        expect(screen.getByText('Steg 5')).toBeInTheDocument()
+    })
+
+    it('has no month markers in the compact version', () => {
+        const { container } = render(<StepTimeline steps={manySteps} onSelect={vi.fn()} compact />)
+
+        expect(container.querySelector('.step-timeline-month')).toBeNull()
+    })
+})
+
+describe('StepTimeline: following the step in view', () => {
+    afterEach(() => {
+        delete (Element.prototype as Partial<Element>).scrollTo
+    })
+
+    it('scrolls the line sideways when the step in view changes', () => {
+        const scrollTo = vi.fn()
+        Element.prototype.scrollTo = scrollTo
+        const { rerender } = render(<StepTimeline steps={steps} onSelect={vi.fn()} activeStepId="s1" />)
+        scrollTo.mockClear()
+
+        rerender(<StepTimeline steps={steps} onSelect={vi.fn()} activeStepId="s3" />)
+
+        expect(scrollTo).toHaveBeenCalledOnce()
+        expect(scrollTo.mock.contexts[0]).toHaveClass('step-timeline-list')
     })
 })

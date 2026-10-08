@@ -61,6 +61,14 @@ export function formatDate(isoDate: string): string {
     return dateFormat.format(new Date(isoDate))
 }
 
+const monthFormat = new Intl.DateTimeFormat('sv-SE', { month: 'short', timeZone: 'UTC' })
+const monthWithYearFormat = new Intl.DateTimeFormat('sv-SE', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** "2026-10-08" → "okt.", or "okt. 2026" with the year */
+export function formatMonth(isoDate: string, withYear = false): string {
+    return (withYear ? monthWithYearFormat : monthFormat).format(new Date(isoDate))
+}
+
 /** Describes a start and end date that may each be missing. */
 export function formatPeriod(startDate: string | null, endDate: string | null): string {
     if (startDate && endDate) return `${formatDate(startDate)} – ${formatDate(endDate)}`
