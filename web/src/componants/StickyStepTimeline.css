@@ -40,7 +40,7 @@
   display: none;
 }
 
-.step-timeline.is-compact .step-timeline-list {
+.sticky-timeline-bar .step-timeline.is-compact .step-timeline-list {
   padding: 6px 0;
   grid-auto-columns: minmax(36px, 1fr);
 }
@@ -68,6 +68,17 @@
   --dot-row: 18px;
 
   grid-auto-columns: minmax(8px, 1fr);
+}
+
+/* The compact bar has no names to make room for, only enough space for the ring around the
+   first and last dot. It can still be swiped on a phone, so the scrollbar is just in the way. */
+.sticky-timeline-bar .step-timeline.is-compact .step-timeline-list {
+  padding-inline: 8px;
+  scrollbar-width: none;
+}
+
+.sticky-timeline-bar .step-timeline.is-compact .step-timeline-list::-webkit-scrollbar {
+  display: none;
 }
 
 .step-timeline.is-compact.is-dense .step-timeline-button {
