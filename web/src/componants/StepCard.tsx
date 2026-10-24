@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { deleteStep, updateStep, type Step, type StepImage } from '../api/steps'
+import { deleteStep, deleteStepImage, updateStep, uploadStepImages, type Step, type StepImage } from '../api/steps'
 import { formatAmount, formatDate, stepStatusLabels } from '../utils/formatProject'
 import { stepElementId } from '../utils/stepElementId'
 import { StepForm } from './StepForm'
-import { StepImages } from './StepImages'
+import { ImageGallery } from './ImageGallery'
 import './StepCard.css'
 
 type StepCardProps = {
@@ -85,7 +85,12 @@ export function StepCard({ step, cost = 0, highlighted = false, onSaved, onDelet
             </p>
             {step.description && <p className="step-card-description">{step.description}</p>}
 
-            <StepImages stepId={step.id} images={step.images} onChange={(images) => onImagesChange(step.id, images)} />
+            <ImageGallery
+                images={step.images}
+                upload={(files) => uploadStepImages(step.id, files)}
+                remove={deleteStepImage}
+                onChange={(images) => onImagesChange(step.id, images)}
+            />
 
             {error && <p className="form-error" role="alert">{error}</p>}
 

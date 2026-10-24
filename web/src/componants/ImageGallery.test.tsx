@@ -3,11 +3,20 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { StepImage } from '../api/steps'
 import { makeStepImage } from '../test/makeStep'
-import { StepImages } from './StepImages'
+import { deleteStepImage, uploadStepImages } from '../api/steps'
+import { ImageGallery } from './ImageGallery'
 
 function renderImages(images: StepImage[] = []) {
     const onChange = vi.fn()
-    render(<StepImages stepId="s1" images={images} onChange={onChange} />)
+    // The step functions are used here, so the tests can check the requests that are sent
+    render(
+        <ImageGallery
+            images={images}
+            upload={(files) => uploadStepImages('s1', files)}
+            remove={deleteStepImage}
+            onChange={onChange}
+        />,
+    )
     return { onChange, user: userEvent.setup() }
 }
 
@@ -18,7 +27,7 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('StepImages', () => {
+describe('ImageGallery', () => {
     it('shows each image as a thumbnail', () => {
         renderImages([makeStepImage('a.jpg'), makeStepImage('b.png')])
 

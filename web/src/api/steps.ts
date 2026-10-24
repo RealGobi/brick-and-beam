@@ -44,7 +44,7 @@ export function isStepPriority(value: unknown): value is StepPriority {
     return stepPriorities.some((priority) => priority === value)
 }
 
-function isStepImage(value: unknown): value is StepImage {
+export function isStepImage(value: unknown): value is StepImage {
     if (typeof value !== 'object' || value === null) return false
 
     const image = value as Record<string, unknown>

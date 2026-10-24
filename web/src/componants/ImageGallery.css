@@ -1,0 +1,73 @@
+/* Thumbnails with a delete button each, and a button for uploading more */
+
+.image-gallery {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.image-gallery li {
+  position: relative;
+}
+
+/* The thumbnail is a button that opens the image viewer */
+.image-gallery-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  cursor: zoom-in;
+}
+
+.image-gallery-open:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+.image-gallery img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.image-gallery-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  font-size: 18px;
+  line-height: 1;
+  color: #fff;
+  background: rgb(29 43 37 / 70%);
+  cursor: pointer;
+}
+
+.image-gallery-delete:hover {
+  background: var(--danger);
+}
+
+.image-gallery-upload {
+  align-self: flex-start;
+}
+
+/* Show keyboard focus on the label, since the real file input is hidden */
+.image-gallery-upload:focus-within {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+.image-gallery-upload.is-disabled {
+  opacity: 0.6;
+  cursor: default;
+}

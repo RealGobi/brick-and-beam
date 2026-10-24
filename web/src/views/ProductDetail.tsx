@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { deleteProduct, fetchProduct, type Product } from '../api/products'
 import { ProductForm } from '../componants/ProductForm'
 import { ServiceStatusBadge } from '../componants/ProductTable'
+import { ServiceHistory } from '../componants/ServiceHistory'
 import { formatDate } from '../utils/formatProject'
 import { formatServiceInterval } from '../utils/formatProduct'
 import './Dashboard.css'
@@ -46,12 +47,20 @@ function ProductPage({ productId }: { productId: string }) {
         )
     }
 
+    const showProduct = (product: Product) => setState({ product, loading: false, error: null })
+
+    // The server computes the last and next service, so ask again after the history changes.
+    // A failed refresh keeps the product as it was; the history itself is already up to date.
+    function reloadProduct() {
+        fetchProduct(productId)
+            .then(showProduct)
+            .catch(() => {})
+    }
+
     return (
         <div className="dashboard">
-            <ProductHeader
-                product={state.product}
-                onSaved={(product) => setState({ product, loading: false, error: null })}
-            />
+            <ProductHeader product={state.product} onSaved={showProduct} />
+            <ServiceHistory productId={productId} onChanged={reloadProduct} />
         </div>
     )
 }
