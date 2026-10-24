@@ -6,9 +6,11 @@ import ProjectDetail from "./views/ProjectDetail";
 import Service from "./views/Service";
 import ProductDetail from "./views/ProductDetail";
 import { SidaBar } from "./componants/SidaBar";
+import { useNotifications } from "./hooks/useNotifications";
 
 export default function App() {
   const [status, setStatus] = useState("Ansluter…");
+  const notifications = useNotifications();
 
   useEffect(() => {
     fetch("/api/health")
@@ -18,7 +20,7 @@ export default function App() {
 
   return (
     <div className="layout">
-      <SidaBar status={status} />
+      <SidaBar status={status} notifications={notifications} />
       <main className="content">
         <Routes>
           <Route path="/" element={<Navigate to="/overview" replace />} />

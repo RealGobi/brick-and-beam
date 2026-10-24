@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Notification } from '../api/notifications'
 import type { Product } from '../api/products'
 import type { Project } from '../api/projects'
 import { makeProduct } from '../test/makeProduct'
@@ -9,11 +10,14 @@ import Dashboard from './Dashboard'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
-/** Answers the projects and the products requests like the real server. A new response per request. */
-function mockProjects(projects: Project[], products: Product[] = []) {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
-        String(url).startsWith('/api/products') ? json(products) : json(projects),
-    )
+/** Answers the projects, products and notifications requests like the real server. A new response per request. */
+function mockProjects(projects: Project[], products: Product[] = [], notifications: Notification[] = []) {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+        const path = String(url)
+        if (path.startsWith('/api/products')) return json(products)
+        if (path.startsWith('/api/notifications')) return json(notifications)
+        return json(projects)
+    })
 }
 
 function renderDashboard() {
@@ -152,5 +156,36 @@ describe('Dashboard: service', () => {
         renderDashboard()
 
         expect(await screen.findByRole('link', { name: '+ Lägg till produkt' })).toHaveAttribute('href', '/service?nytt')
+    })
+})
+
+describe('Dashboard: att göra', () => {
+    const notice: Notification = {
+        key: 'service-p1',
+        kind: 'service',
+        productId: 'p1',
+        productName: 'Värmepump',
+        title: 'Dags för service',
+        date: '2026-10-01',
+        overdue: true,
+    }
+
+    it('lists what needs attention, linking to the product', async () => {
+        mockProjects([], [], [notice])
+
+        renderDashboard()
+
+        const todo = within(await screen.findByRole('region', { name: 'Att göra' }))
+        expect(todo.getByRole('link', { name: /Dags för service/ })).toHaveAttribute('href', '/service/p1')
+        expect(todo.getByText(/Försenad/)).toBeInTheDocument()
+    })
+
+    it('is not shown when nothing needs attention', async () => {
+        mockProjects([], [], [])
+
+        renderDashboard()
+        await screen.findByText('Inga projekt än.')
+
+        expect(screen.queryByRole('region', { name: 'Att göra' })).not.toBeInTheDocument()
     })
 })

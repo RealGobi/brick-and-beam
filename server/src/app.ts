@@ -4,7 +4,9 @@ import { expenseRoutes } from "./expenses/expenseRoutes";
 import { imageRoutes } from "./images/imageRoutes";
 import { uploadsDir } from "./images/imageStorage";
 import { productRoutes } from "./products/productRoutes";
+import { notificationRoutes } from "./notifications/notificationRoutes";
 import { projectRoutes } from "./projects/projectRoutes";
+import { reminderRoutes } from "./reminders/reminderRoutes";
 import { serviceRoutes } from "./services/serviceRoutes";
 import { stepRoutes } from "./steps/stepRoutes";
 
@@ -18,6 +20,8 @@ app.get("/api/health", (c) =>
 app.route("/api/projects", projectRoutes);
 app.route("/api/products", productRoutes);
 app.route("/api", serviceRoutes);
+app.route("/api", reminderRoutes);
+app.route("/api/notifications", notificationRoutes);
 app.route("/api", stepRoutes);
 app.route("/api", imageRoutes);
 app.route("/api", expenseRoutes);

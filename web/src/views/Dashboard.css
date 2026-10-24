@@ -87,3 +87,16 @@
     align-items: flex-start;
   }
 }
+
+/* Things that need attention soon, above the stats */
+.todo-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.todo-panel h2 {
+  padding: 16px 18px 8px;
+  font-size: 20px;
+}

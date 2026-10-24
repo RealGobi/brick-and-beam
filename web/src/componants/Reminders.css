@@ -1,0 +1,75 @@
+.reminder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.reminder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 12px 22px;
+  border-left: 3px solid var(--ongoing);
+}
+
+.reminder + .reminder {
+  border-top: 1px solid var(--border);
+}
+
+.reminder.is-overdue {
+  border-left-color: var(--danger);
+}
+
+.reminder.is-done {
+  border-left-color: var(--done);
+  opacity: 0.65;
+}
+
+.reminder-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-title {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.reminder.is-done .reminder-title {
+  text-decoration: line-through;
+}
+
+.reminder-date,
+.reminder-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.reminder.is-overdue .reminder-date {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.reminder-delete {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  cursor: pointer;
+}
+
+.reminder-delete:hover {
+  color: #fff;
+  background: var(--danger);
+}

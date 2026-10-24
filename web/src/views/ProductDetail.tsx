@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { announceNotificationsChanged } from '../api/notifications'
 import { deleteProduct, fetchProduct, type Product } from '../api/products'
 import { ProductForm } from '../componants/ProductForm'
 import { ServiceStatusBadge } from '../componants/ProductTable'
+import { ReminderSection } from '../componants/ReminderSection'
 import { ServiceHistory } from '../componants/ServiceHistory'
 import { formatDate } from '../utils/formatProject'
 import { formatServiceInterval } from '../utils/formatProduct'
@@ -47,7 +49,11 @@ function ProductPage({ productId }: { productId: string }) {
         )
     }
 
-    const showProduct = (product: Product) => setState({ product, loading: false, error: null })
+    // Any change to the product or its services can change what the bell shows
+    function showProduct(product: Product) {
+        setState({ product, loading: false, error: null })
+        announceNotificationsChanged()
+    }
 
     // The server computes the last and next service, so ask again after the history changes.
     // A failed refresh keeps the product as it was; the history itself is already up to date.
@@ -60,6 +66,7 @@ function ProductPage({ productId }: { productId: string }) {
     return (
         <div className="dashboard">
             <ProductHeader product={state.product} onSaved={showProduct} />
+            <ReminderSection productId={productId} />
             <ServiceHistory productId={productId} onChanged={reloadProduct} />
         </div>
     )
@@ -83,6 +90,7 @@ function ProductHeader({ product, onSaved }: ProductHeaderProps) {
         setError(null)
         try {
             await deleteProduct(product.id)
+            announceNotificationsChanged()
             navigate('/service')
         } catch (deleteError) {
             setError(deleteError instanceof Error ? deleteError.message : 'Kunde inte ta bort produkten')

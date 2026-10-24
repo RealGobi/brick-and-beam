@@ -1,0 +1,84 @@
+.notification-bell {
+  position: relative;
+}
+
+/* Looks like the menu links above it, on the dark green sidebar */
+.notification-bell-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: #c4d1c9;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.notification-bell-button:hover,
+.notification-bell-button[aria-expanded='true'] {
+  color: #fff;
+  background: rgb(255 255 255 / 6%);
+}
+
+.notification-bell-button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.notification-bell-count {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--green-900);
+  background: var(--gold);
+}
+
+.notification-bell-count.is-overdue {
+  color: #fff;
+  background: var(--danger);
+}
+
+/* Opens below the button inside the sidebar, on a light card */
+.notification-bell-panel {
+  margin-top: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+}
+
+.notification-bell-panel .notification {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.notification-bell-empty {
+  padding: 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* On a phone the sidebar is a bar at the top, so the list floats below it */
+@media (max-width: 760px) {
+  .notification-bell-button span:not(.notification-bell-count) {
+    display: none;
+  }
+
+  .notification-bell-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 50;
+    width: min(320px, calc(100vw - 32px));
+  }
+}

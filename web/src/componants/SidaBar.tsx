@@ -1,14 +1,17 @@
 import { NavLink } from 'react-router'
+import type { Notification } from '../api/notifications'
+import { NotificationBell } from './NotificationBell'
 import './SidaBar.css'
 
 type SideBarProps = {
     status?: string
+    notifications?: Notification[]
 }
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'sidebar-link active' : 'sidebar-link'
 
-export function SidaBar({ status }: SideBarProps) {
+export function SidaBar({ status, notifications = [] }: SideBarProps) {
 
     return (
         <aside className="sidebar">
@@ -19,6 +22,7 @@ export function SidaBar({ status }: SideBarProps) {
                 <NavLink to='/overview' className={linkClass}>Översikt</NavLink>
                 <NavLink to='/project' className={linkClass}>Projekt</NavLink>
                 <NavLink to='/service' className={linkClass}>Service</NavLink>
+                <NotificationBell notifications={notifications} />
             </nav>
             <div className="sidebar-footer">
                 <span className="sidebar-avatar" aria-hidden="true">AN</span>

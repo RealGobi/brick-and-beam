@@ -145,6 +145,8 @@
     align-items: center;
     gap: 16px;
     padding: 14px 16px;
+    /* Lets the notification list float below the bar */
+    overflow: visible;
   }
 
   .sidebar::before,

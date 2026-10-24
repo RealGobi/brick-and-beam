@@ -1,8 +1,10 @@
 import { Link } from 'react-router'
 import type { Project, ProjectStatus } from '../api/projects'
 import { AddProjectCard, ProjectCard } from '../componants/ProjectCard'
+import { NotificationList } from '../componants/NotificationList'
 import { ProductTable } from '../componants/ProductTable'
 import { StatCard } from '../componants/StatCard'
+import { useNotifications } from '../hooks/useNotifications'
 import { useProducts } from '../hooks/useProducts'
 import { useProjects } from '../hooks/useProjects'
 import './Dashboard.css'
@@ -12,6 +14,7 @@ const countBy = (projects: Project[], status: ProjectStatus) =>
 
 function Dashboard() {
     const { projects, loading, error } = useProjects()
+    const notifications = useNotifications()
 
     return (
         <div className="dashboard">
@@ -30,6 +33,14 @@ function Dashboard() {
                     <Link to="/project?nytt" className="button button-primary">+ Nytt projekt</Link>
                 </div>
             </header>
+
+            {/* Only shown when something needs attention */}
+            {notifications.length > 0 && (
+                <section className="todo-panel" aria-labelledby="todo-heading">
+                    <h2 id="todo-heading">Att göra</h2>
+                    <NotificationList notifications={notifications.slice(0, 5)} />
+                </section>
+            )}
 
             <section className="stat-panel" aria-label="Projekt per status">
                 <StatCard label="Färdiga" value={countBy(projects, 'done')} total={projects.length} tone="done" />

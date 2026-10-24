@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Reminder } from '../api/reminders'
 import type { ServiceEntry } from '../api/services'
 import { makeProduct } from '../test/makeProduct'
 import { makeService } from '../test/makeService'
@@ -21,11 +22,14 @@ const product = makeProduct({
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
-/** Answers the product and the services requests like the real server, with a new response each time. */
-function mockServer(services: ServiceEntry[] = []) {
-    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
-        String(url).endsWith('/services') ? json(services) : json(product),
-    )
+/** Answers the product, services and reminders requests like the real server, with a new response each time. */
+function mockServer(services: ServiceEntry[] = [], reminders: Reminder[] = []) {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+        const path = String(url)
+        if (path.endsWith('/services')) return json(services)
+        if (path.endsWith('/reminders')) return json(reminders)
+        return json(product)
+    })
 }
 
 function renderPage() {
