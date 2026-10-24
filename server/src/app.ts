@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { expenseRoutes } from "./expenses/expenseRoutes";
 import { imageRoutes } from "./images/imageRoutes";
 import { uploadsDir } from "./images/imageStorage";
+import { productRoutes } from "./products/productRoutes";
 import { projectRoutes } from "./projects/projectRoutes";
 import { stepRoutes } from "./steps/stepRoutes";
 
@@ -14,6 +15,7 @@ app.get("/api/health", (c) =>
 );
 
 app.route("/api/projects", projectRoutes);
+app.route("/api/products", productRoutes);
 app.route("/api", stepRoutes);
 app.route("/api", imageRoutes);
 app.route("/api", expenseRoutes);

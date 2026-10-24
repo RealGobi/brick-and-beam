@@ -1,12 +1,19 @@
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Product } from '../api/products'
 import type { Project } from '../api/projects'
+import { makeProduct } from '../test/makeProduct'
 import { makeProject } from '../test/makeProject'
 import Dashboard from './Dashboard'
 
-function mockProjects(projects: Project[]) {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(projects)))
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
+
+/** Answers the projects and the products requests like the real server. A new response per request. */
+function mockProjects(projects: Project[], products: Product[] = []) {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+        String(url).startsWith('/api/products') ? json(products) : json(projects),
+    )
 }
 
 function renderDashboard() {
@@ -116,10 +123,34 @@ describe('Dashboard', () => {
     })
 
     it('shows an error when the projects cannot be fetched', async () => {
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 500 }))
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+            String(url).startsWith('/api/products') ? json([]) : json({}, 500),
+        )
 
         renderDashboard()
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte hämta projekten')
+    })
+})
+
+describe('Dashboard: service', () => {
+    it('lists the products that need service soonest, at most five', async () => {
+        const products = ['A', 'B', 'C', 'D', 'E', 'F'].map((name) => makeProduct({ id: name, name }))
+        mockProjects([], products)
+
+        renderDashboard()
+
+        const service = within(await screen.findByRole('table'))
+        expect(service.getAllByRole('link')).toHaveLength(5)
+        expect(service.getByRole('link', { name: 'A' })).toHaveAttribute('href', '/service/A')
+        expect(service.queryByRole('link', { name: 'F' })).not.toBeInTheDocument()
+    })
+
+    it('offers to add a product when there are none', async () => {
+        mockProjects([], [])
+
+        renderDashboard()
+
+        expect(await screen.findByRole('link', { name: '+ Lägg till produkt' })).toHaveAttribute('href', '/service?nytt')
     })
 })

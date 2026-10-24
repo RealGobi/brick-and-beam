@@ -28,6 +28,16 @@ export function validateName(value: unknown, field = "name"): Result<string> {
   return valid(name);
 }
 
+/** Optional, trimmed text of at most MAX_NAME_LENGTH characters, e.g. a supplier or a model. Missing becomes an empty string. */
+export function validateShortText(value: unknown, field: string): Result<string> {
+  if (value === undefined || value === null) return valid("");
+  if (typeof value !== "string") return invalid(`${field} måste vara text`);
+
+  const text = value.trim();
+  if (text.length > MAX_NAME_LENGTH) return invalid(`${field} får vara högst ${MAX_NAME_LENGTH} tecken`);
+  return valid(text);
+}
+
 /** Optional, trimmed text. Missing becomes an empty string. */
 export function validateDescription(value: unknown): Result<string> {
   if (value === undefined || value === null) return valid("");

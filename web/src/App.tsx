@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router";
 import Dashboard from "./views/Dashboard";
 import Projects from "./views/Projects";
 import ProjectDetail from "./views/ProjectDetail";
+import Service from "./views/Service";
+import ProductDetail from "./views/ProductDetail";
 import { SidaBar } from "./componants/SidaBar";
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/project" element={<Projects />} />
           <Route path="/project/:projectId" element={<ProjectDetail />} />
+          <Route path="/service" element={<Service />} />
+          <Route path="/service/:productId" element={<ProductDetail />} />
         </Routes>
       </main>
     </div>

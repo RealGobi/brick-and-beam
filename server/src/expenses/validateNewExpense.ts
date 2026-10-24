@@ -1,5 +1,4 @@
 import {
-  MAX_NAME_LENGTH,
   invalid,
   isObject,
   isUuid,
@@ -7,6 +6,7 @@ import {
   validateChoice,
   validateDate,
   validateName,
+  validateShortText,
   type Result,
 } from "../validation";
 import { expenseCategories } from "./expenseCategory";
@@ -20,16 +20,6 @@ function validateAmount(value: unknown): Result<number> {
     return invalid("amount måste vara ett heltal större än 0");
   }
   return valid(value);
-}
-
-/** Optional, trimmed text. Missing becomes an empty string. */
-function validateSupplier(value: unknown): Result<string> {
-  if (value === undefined || value === null) return valid("");
-  if (typeof value !== "string") return invalid("supplier måste vara text");
-
-  const supplier = value.trim();
-  if (supplier.length > MAX_NAME_LENGTH) return invalid(`supplier får vara högst ${MAX_NAME_LENGTH} tecken`);
-  return valid(supplier);
 }
 
 function validateStepId(value: unknown): Result<string | null> {
@@ -56,7 +46,7 @@ export function validateNewExpense(body: unknown): Result<NewExpense> {
   if (!stepId.ok) return stepId;
   const category = validateChoice(body.category, "category", expenseCategories, "other");
   if (!category.ok) return category;
-  const supplier = validateSupplier(body.supplier);
+  const supplier = validateShortText(body.supplier, "supplier");
   if (!supplier.ok) return supplier;
 
   return valid({

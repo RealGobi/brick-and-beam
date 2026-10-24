@@ -1,7 +1,9 @@
 import { Link } from 'react-router'
 import type { Project, ProjectStatus } from '../api/projects'
 import { AddProjectCard, ProjectCard } from '../componants/ProjectCard'
+import { ProductTable } from '../componants/ProductTable'
 import { StatCard } from '../componants/StatCard'
+import { useProducts } from '../hooks/useProducts'
 import { useProjects } from '../hooks/useProjects'
 import './Dashboard.css'
 
@@ -42,8 +44,35 @@ function Dashboard() {
                 </div>
                 <RecentProjects projects={projects} loading={loading} error={error} />
             </section>
+
+            <section>
+                <div className="section-head">
+                    <h2>Service</h2>
+                    <Link to="/service" className="see-all">Visa alla →</Link>
+                </div>
+                <UpcomingService />
+            </section>
         </div>
     )
+}
+
+// The products that need service soonest come first from the server
+const SERVICE_ROWS = 5
+
+function UpcomingService() {
+    const { products, loading, error } = useProducts()
+
+    if (loading) return <p className="empty">Hämtar produkter…</p>
+    if (error) return <p className="empty" role="alert">Kunde inte hämta produkterna. {error}</p>
+    if (products.length === 0) {
+        return (
+            <p className="empty">
+                Inga produkter än. <Link to="/service?nytt" className="see-all">+ Lägg till produkt</Link>
+            </p>
+        )
+    }
+
+    return <ProductTable products={products.slice(0, SERVICE_ROWS)} />
 }
 
 type RecentProjectsProps = {

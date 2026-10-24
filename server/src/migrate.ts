@@ -42,8 +42,10 @@ async function migrate(): Promise<void> {
 }
 
 migrate()
-  .catch((error: Error) => {
-    console.error(`Migreringen misslyckades: ${error.message}`);
+  .catch((error: NodeJS.ErrnoException) => {
+    // Connection errors like ECONNREFUSED have an empty message, only a code
+    const reason = error.message || error.code;
+    console.error(`Migreringen misslyckades: ${reason}. Körs databasen? Starta med: docker compose up -d`);
     process.exitCode = 1;
   })
   // Close the pool so the script can exit

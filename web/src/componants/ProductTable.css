@@ -1,0 +1,96 @@
+.product-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  font-size: 15px;
+}
+
+.product-table th {
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  background: var(--surface-warm);
+  border-bottom: 1px solid var(--border);
+}
+
+.product-table td {
+  padding: 14px 18px;
+  color: var(--text);
+}
+
+.product-table tbody tr {
+  /* The name link stretches over the whole row */
+  position: relative;
+  transition: background 0.15s;
+}
+
+.product-table tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+.product-table tbody tr:hover {
+  background: var(--surface-warm);
+}
+
+.product-table-link {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.product-table-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.product-table tbody tr:hover .product-table-link {
+  color: var(--green-600);
+  text-decoration: underline;
+}
+
+.product-table-link:focus-visible {
+  outline: none;
+}
+
+.product-table tbody tr:has(.product-table-link:focus-visible) {
+  outline: 2px solid var(--green-600);
+  outline-offset: -2px;
+}
+
+.product-table-muted {
+  color: var(--muted);
+}
+
+.service-status-overdue {
+  color: #fff;
+  background: var(--danger);
+}
+
+.service-status-soon {
+  color: var(--planned-text);
+  background: var(--planned-bg);
+}
+
+.service-status-ok {
+  color: var(--done);
+  background: var(--done-bg);
+}
+
+@media (max-width: 760px) {
+  .product-table-optional {
+    display: none;
+  }
+
+  .product-table th,
+  .product-table td {
+    padding: 12px;
+  }
+}

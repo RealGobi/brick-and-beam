@@ -18,6 +18,7 @@ export function SidaBar({ status }: SideBarProps) {
             <nav className="sidebar-nav">
                 <NavLink to='/overview' className={linkClass}>Översikt</NavLink>
                 <NavLink to='/project' className={linkClass}>Projekt</NavLink>
+                <NavLink to='/service' className={linkClass}>Service</NavLink>
             </nav>
             <div className="sidebar-footer">
                 <span className="sidebar-avatar" aria-hidden="true">AN</span>
